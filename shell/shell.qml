@@ -651,7 +651,7 @@ ShellRoot {
         }
         // JSON: [{ "name": "HP 524pf", "percent": 64 }, …], left to right.
         function list(): string {
-            return JSON.stringify(brightnessService.displays.map(d => ({ name: d.label, percent: Math.round(d.value * 100) })))
+            return JSON.stringify(brightnessService.displays.map(d => ({ name: d.label, percent: Math.round((brightnessService.values[d.id] ?? d.value) * 100) })))
         }
         // A screen's brightness, by the name list() gives.
         function set(name: string, percent: int): void {

@@ -6,8 +6,8 @@ import "../services"
 // A screen's brightness (BrightnessService), under the volume in Home: sun,
 // slider, value and the monitor's name in a row like the volume's; with
 // `compact` (two screens side by side), the name and the value over the
-// slider. The slider shows where it's dragged right away; the monitor follows
-// a moment later.
+// slider. The slider shows where it's dragged right away (the service's
+// values); the monitor follows a moment later.
 CcCard {
     id: root
 
@@ -16,13 +16,11 @@ CcCard {
     required property var display
     property bool compact: false
 
-    // Its own while dragging: the service only sends the latest value.
-    property real value: display.value
+    readonly property real value: brightness.values[display.id] ?? display.value
 
     implicitHeight: 56
 
     function moved(v: real): void {
-        value = v
         brightness.set(display.id, v)
     }
 

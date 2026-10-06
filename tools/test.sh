@@ -187,6 +187,10 @@ done
 [ "$(cat "$tmp/ddc.value")" = 72 ] || bad "brightness: the monitor got $(cat "$tmp/ddc.value"), not 72"
 [ "$(cat "$tmp/backlight/test_bl/brightness")" = 300 ] ||
     bad "brightness: the backlight is at $(cat "$tmp/backlight/test_bl/brightness"), not 300 (30 % of 1000)"
+# And it says so: a Control Center page made again shows where they were left.
+want='[{"name":"Built-in display","percent":30},{"name":"Test Monitor","percent":72}]'
+got=$(ipc brightness list)
+[ "$got" = "$want" ] || bad "brightness: after setting it, the screens are $got, expected $want"
 
 echo "5. Settings (every section)"
 for section in appearance fonts bar lock idle about; do

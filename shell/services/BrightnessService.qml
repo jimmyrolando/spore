@@ -20,8 +20,13 @@ QtObject {
 
     // The screens there are, left to right: [{ id, kind ("ddc" or
     // "backlight"), target (the I2C bus or the backlight device), label (the
-    // monitor\x27s model), max, value (0..1) }].
+    // monitor's model), max, value (0..1) }].
     property var displays: []
+
+    // Where each screen is, id -> 0..1: as read, or as set, right away. The
+    // rows show this, so a page made again (another tab and back) shows the
+    // sliders where they were left, not where they were when it opened.
+    property var values: ({})
 
     // The monitors ddcutil found: [{ bus, connector ("DP-4"), model }].
     property var monitors: []
@@ -125,15 +130,22 @@ QtObject {
             monitors = ddc
             detected = true
         }
-        // Only this session\x27s screens, in their order on the desk; a laptop\x27s
+        // Only this session's screens, in their order on the desk; a laptop's
         // own one first.
         const x = {}
         for (const s of Quickshell.screens) x[s.name] = s.x
         displays = found.filter(d => d.kind === "backlight" || d.connector in x)
             .sort((a, b) => (a.kind === "backlight" ? -1e9 : x[a.connector]) - (b.kind === "backlight" ? -1e9 : x[b.connector]))
+        // A value still being sent stays: the monitor answered before it.
+        const next = {}
+        for (const d of displays) {
+            const sending = d.id in pending || d.id === writer.target
+            next[d.id] = sending && d.id in values ? values[d.id] : d.value
+        }
+        values = next
     }
 
-    // A laptop\x27s own screen ("eDP-1"): its model if niri says it, or else.
+    // A laptop's own screen ("eDP-1"): its model if niri says it, or else.
     function builtInName(): string {
         for (const s of Quickshell.screens) {
             if (s.name.startsWith("eDP") && s.model) return s.model
@@ -150,9 +162,12 @@ QtObject {
     function set(id: string, value: real): void {
         const d = displays.find(d => d.id === id)
         if (!d) return
-        const raw = Math.round(Math.max(d.kind === "backlight" ? 0.05 : 0, Math.min(1, value)) * d.max)
+        const v = Math.max(d.kind === "backlight" ? 0.05 : 0, Math.min(1, value))
+        const shown = Object.assign({}, values)
+        shown[id] = v
+        values = shown
         const next = Object.assign({}, pending)
-        next[id] = raw
+        next[id] = Math.round(v * d.max)
         pending = next
         if (!writer.running) writeNext()
     }
@@ -169,13 +184,14 @@ QtObject {
             writeNext()
             return
         }
+        writer.target = id
         writer.command = ["sh", "-c", writeScript, "_", ddcutil, backlightDir, d.kind, d.target, String(raw)]
         writer.running = true
     }
 
     // $1 ddcutil, $2 the backlight folder, $3 the kind, $4 its bus or device,
-    // $5 the value. A backlight the user can\x27t write to goes through logind,
-    // which lets the session\x27s user set it.
+    // $5 the value. A backlight the user can't write to goes through logind,
+    // which lets the session's user set it.
     readonly property string writeScript: `
         if [ "$3" = ddc ]; then
             exec "$1" setvcp 10 "$5" --bus "$4" --noverify
@@ -187,6 +203,11 @@ QtObject {
         fi`
 
     property Process writer: Process {
-        onExited: root.writeNext()
+        // The display it's writing to ("" = none).
+        property string target: ""
+        onExited: {
+            target = ""
+            root.writeNext()
+        }
     }
 }
