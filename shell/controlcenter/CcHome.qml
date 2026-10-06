@@ -6,7 +6,6 @@ import Quickshell.Io
 import Quickshell.Widgets
 import Quickshell.Bluetooth
 import Quickshell.Networking
-import Quickshell.Services.Pipewire
 import Quickshell.Services.UPower
 import Quickshell.Services.Mpris
 import "../common"
@@ -15,8 +14,9 @@ import "ccutil.js" as CcUtil
 import "../common/brand.js" as Brand
 
 // Control Center → Home (design v2): who you are over the wallpaper, six
-// quick toggles (Wi-Fi, Bluetooth, Caffeine, Mute, Do Not Disturb, Power
-// Saver), what's playing, the time with the weather, and the volume.
+// quick toggles in a row (Wi-Fi, Bluetooth, Caffeine, Do Not Disturb, Power
+// Saver: muting is the volume row's), what's playing, the time with the
+// weather, the volume and the screens' brightness.
 ColumnLayout {
     id: root
 
@@ -28,6 +28,8 @@ ColumnLayout {
     property SystemMonitor monitor: null
     property bool caffeine: false
     property NotificationService notifications: null
+    // A row per screen whose brightness can be set.
+    property BrightnessService brightness: null
     signal caffeineToggled()
     // Click on the header's wallpaper.
     signal wallpaperPickerRequested()
@@ -58,18 +60,10 @@ ColumnLayout {
     readonly property string avatarPath: user ? user.avatarPath : ""
     readonly property int avatarVersion: user ? user.avatarVersion : 0
 
-    readonly property var wifiDevice: Networking.devices.values.find(d => d.type === DeviceType.Wifi) ?? null
-    readonly property var wifiNetwork: wifiDevice ? (wifiDevice.networks.values.find(n => n.connected) ?? null) : null
     readonly property BluetoothAdapter btAdapter: Bluetooth.defaultAdapter
-    readonly property int btConnected: Bluetooth.devices.values.filter(d => d.connected).length
-    readonly property PwNode sink: Pipewire.defaultAudioSink
-    readonly property bool audioReady: sink !== null && sink.audio !== null
     readonly property bool dnd: notifications !== null && notifications.dnd
     readonly property bool saver: PowerProfiles.profile === PowerProfile.PowerSaver
 
-    PwObjectTracker {
-        objects: [root.sink]
-    }
 
     // --- Header: photo, name, user@host with the uptime, and the brand with
     // its version, centered over the wallpaper ---
@@ -206,12 +200,12 @@ ColumnLayout {
         }
     }
 
-    // --- Quick toggles: 3 x 2 ---
+    // --- Quick toggles: a row of five, the icon over the name; on, in the
+    // accent ---
     component Tile: Rectangle {
         id: tile
         property string icon: ""
         property string label: ""
-        property string sub: ""
         property bool checked: false
         property bool available: true
         signal clicked()
@@ -227,37 +221,27 @@ ColumnLayout {
         border.width: 1
         border.color: checked ? root.theme.accent : root.theme.alpha(root.theme.accent, 0.14)
 
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 14
-            anchors.rightMargin: 14
-            spacing: 12
+        ColumnLayout {
+            anchors.centerIn: parent
+            width: parent.width - 12
+            spacing: 6
 
             Icon {
+                Layout.alignment: Qt.AlignHCenter
                 name: tile.icon
                 size: 18
                 color: tile.checked ? root.theme.textOnAccent : root.theme.text
             }
 
-            ColumnLayout {
+            UiText {
+                theme: root.theme
                 Layout.fillWidth: true
-                spacing: 1
-
-                UiText {
-                    theme: root.theme
-                    Layout.fillWidth: true
-                    text: tile.label
-                    color: tile.checked ? root.theme.textOnAccent : root.theme.text
-                    font.weight: Font.Medium
-                }
-
-                UiText {
-                    theme: root.theme
-                    Layout.fillWidth: true
-                    text: tile.sub
-                    color: tile.checked ? root.theme.alpha(root.theme.textOnAccent, 0.78) : root.theme.muted
-                    font.pixelSize: 11
-                }
+                horizontalAlignment: Text.AlignHCenter
+                elide: Text.ElideRight
+                text: tile.label
+                color: tile.checked ? root.theme.textOnAccent : root.theme.text
+                font.pixelSize: 12
+                font.weight: Font.Medium
             }
         }
 
@@ -270,18 +254,15 @@ ColumnLayout {
         }
     }
 
-    GridLayout {
+    RowLayout {
         Layout.fillWidth: true
-        columns: 3
-        rowSpacing: 10
-        columnSpacing: 10
+        spacing: 10
 
         Tile {
             icon: "wifi"
             label: "Wi-Fi"
             checked: Networking.wifiEnabled
             available: Networking.wifiHardwareEnabled
-            sub: !Networking.wifiEnabled ? "Off" : root.wifiNetwork ? root.wifiNetwork.name : "Not connected"
             onClicked: Networking.wifiEnabled = !Networking.wifiEnabled
         }
 
@@ -290,7 +271,6 @@ ColumnLayout {
             label: "Bluetooth"
             checked: root.btAdapter !== null && root.btAdapter.enabled
             available: root.btAdapter !== null
-            sub: checked ? root.btConnected + " connected" : "Off"
             onClicked: root.btAdapter.enabled = !root.btAdapter.enabled
         }
 
@@ -298,18 +278,7 @@ ColumnLayout {
             icon: "coffee"
             label: "Caffeine"
             checked: root.caffeine
-            sub: checked ? "Screen stays on" : "Off"
             onClicked: root.caffeineToggled()
-        }
-
-        Tile {
-            readonly property bool muted: root.audioReady && root.sink.audio.muted
-            icon: muted ? "volume-x" : "volume-2"
-            label: "Mute"
-            checked: muted
-            available: root.audioReady
-            sub: muted ? "Audio off" : root.audioReady ? Math.round(root.sink.audio.volume * 100) + "%" : "No output"
-            onClicked: root.sink.audio.muted = !root.sink.audio.muted
         }
 
         Tile {
@@ -317,7 +286,6 @@ ColumnLayout {
             label: "Do Not Disturb"
             checked: root.dnd
             available: root.notifications !== null
-            sub: checked ? "On" : "Off"
             onClicked: root.notifications.toggleDnd()
         }
 
@@ -325,20 +293,23 @@ ColumnLayout {
             icon: "leaf"
             label: "Power Saver"
             checked: root.saver
-            sub: checked ? "On" : "Off"
             onClicked: PowerProfiles.profile = checked ? PowerProfile.Balanced : PowerProfile.PowerSaver
         }
     }
 
     // --- What's playing and the time ---
+    // Taller with whatever room the page has left (no screens' brightness,
+    // or only one row of it): never an empty strip at the bottom.
     RowLayout {
         Layout.fillWidth: true
+        Layout.fillHeight: true
         spacing: 12
 
         CcCard {
             id: mediaCard
             theme: root.theme
             Layout.fillWidth: true
+            Layout.fillHeight: true
             // Half and half with the time.
             Layout.preferredWidth: 1
             implicitHeight: 110
@@ -468,6 +439,7 @@ ColumnLayout {
         CcCard {
             theme: root.theme
             Layout.fillWidth: true
+            Layout.fillHeight: true
             Layout.preferredWidth: 1
             implicitHeight: 110
 
@@ -557,6 +529,30 @@ ColumnLayout {
         onDeviceRequested: root.pageRequested("audio")
     }
 
-    Item { Layout.fillHeight: true }
+    // One screen: a row like the volume's; more: half cards, two per row
+    // (ControlCenter makes room for them).
+    GridLayout {
+        id: brightnessGrid
+        readonly property int count: root.brightness ? root.brightness.displays.length : 0
+        visible: count > 0
+        Layout.fillWidth: true
+        columns: count > 1 ? 2 : 1
+        columnSpacing: 12
+        rowSpacing: 12
 
+        Repeater {
+            model: root.brightness ? root.brightness.displays : []
+
+            CcBrightnessRow {
+                required property var modelData
+                theme: root.theme
+                Layout.fillWidth: true
+                // Equal halves.
+                Layout.preferredWidth: 1
+                compact: brightnessGrid.count > 1
+                brightness: root.brightness
+                display: modelData
+            }
+        }
+    }
 }

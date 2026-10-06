@@ -119,6 +119,7 @@ The Control Center opens below the zone of the widget that was clicked
 | `lock` | `lock`, `isLocked` |
 | `caffeine` | `toggle`, `enable`, `disable`, `isEnabled` (no locking or suspending on idle) |
 | `wallpaper` | `reload` |
+| `brightness` | `refresh`, `list` (JSON: name and percent per screen), `set <name> <percent>` |
 
 `spore-ipc` is `quickshell ipc --path <the shell's folder> call`: without the
 folder, Quickshell looks in `~/.config/quickshell` and doesn't find the

@@ -637,6 +637,29 @@ ShellRoot {
         id: drivesService
     }
 
+    // The screens' brightness (Control Center → Home).
+    BrightnessService {
+        id: brightnessService
+    }
+
+    // qs ipc call brightness refresh | list | set <name> <percent>
+    IpcHandler {
+        target: "brightness"
+        // Reads it again (the Control Center does when it opens).
+        function refresh(): void {
+            brightnessService.refresh()
+        }
+        // JSON: [{ "name": "HP 524pf", "percent": 64 }, …], left to right.
+        function list(): string {
+            return JSON.stringify(brightnessService.displays.map(d => ({ name: d.label, percent: Math.round(d.value * 100) })))
+        }
+        // A screen's brightness, by the name list() gives.
+        function set(name: string, percent: int): void {
+            const d = brightnessService.displays.find(d => d.label === name)
+            if (d) brightnessService.set(d.id, percent / 100)
+        }
+    }
+
     // Bluetooth pairing with an agent (the Control Center's Bluetooth page).
     BluetoothAgent {
         id: bluetoothPairing
@@ -736,6 +759,7 @@ ShellRoot {
             notifications: notificationService
             monitor: systemMonitor
             drives: drivesService
+            brightness: brightnessService
             bluetoothAgent: bluetoothPairing
             user: userInfo
             caffeine: root.caffeine

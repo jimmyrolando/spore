@@ -103,8 +103,27 @@ done
 [ -n "$sock" ] || { bad "the nested niri didn't start (see $tmp/niri.log)"; exit 1; }
 disp=$(basename "$sock" | sed 's/^niri\.\(wayland-[0-9]*\)\..*/\1/')
 
+# The screens' brightness (services/BrightnessService.qml) with stand-ins: a
+# monitor that answers on the nested niri's output (winit), one that doesn't,
+# and a laptop's backlight. The real ddcutil never runs: it would reach the
+# real monitors.
+mkdir -p "$tmp/backlight/test_bl"
+echo 500 > "$tmp/backlight/test_bl/brightness"
+echo 1000 > "$tmp/backlight/test_bl/max_brightness"
+echo 40 > "$tmp/ddc.value"
+cat > "$tmp/ddcutil" <<EOF
+#!/bin/sh
+case "\$1" in
+detect) printf 'Display 1\n   I2C bus:          /dev/i2c-7\n   DRM connector:    card0-winit\n   Monitor:          TST:Test Monitor:1\n\nInvalid display\n   I2C bus:          /dev/i2c-8\n' ;;
+getvcp) printf 'VCP 10 C %s 100\n' "\$(cat "$tmp/ddc.value")" ;;
+setvcp) echo "\$3" > "$tmp/ddc.value" ;;
+esac
+EOF
+chmod +x "$tmp/ddcutil"
+
 env XDG_CONFIG_HOME="$tmp/config" XDG_STATE_HOME="$tmp/xdg-state" XDG_CACHE_HOME="$tmp/cache" \
     SPORE_STATE_DIR="$tmp/state" WAYLAND_DISPLAY="$disp" NIRI_SOCKET="$sock" \
+    SPORE_DDCUTIL="$tmp/ddcutil" SPORE_BACKLIGHT_DIR="$tmp/backlight" \
     "$pkg/bin/spore" --no-color > "$log" 2>&1 &
 shell_pid=$!
 
@@ -138,7 +157,7 @@ tr '\0' '\n' < "/proc/$shell_pid/environ" | grep -qxF "SPORE_SESSION=PATH=$PATH"
 
 echo "3. IPC"
 targets=$(WAYLAND_DISPLAY=$disp "$qs" ipc --pid "$shell_pid" show | sed -n 's/^target //p')
-for t in lock clipboard controlcenter appearance power wallpaper settings about caffeine; do
+for t in lock clipboard controlcenter appearance power wallpaper settings about caffeine brightness; do
     grep -qx "$t" <<< "$targets" || bad "missing IPC target \"$t\""
 done
 ipc caffeine enable
@@ -154,6 +173,20 @@ done
 ipc controlcenter toggle
 sleep 0.5
 check_errors "in the Control Center"
+# The brightness: found and read when the shell started, the built-in screen
+# first; what's set reaches the monitor and the backlight.
+want='[{"name":"Built-in display","percent":50},{"name":"Test Monitor","percent":40}]'
+got=$(ipc brightness list)
+[ "$got" = "$want" ] || bad "brightness: the screens are $got, expected $want"
+ipc brightness set "Test Monitor" 72
+ipc brightness set "Built-in display" 30
+for _ in $(seq 10); do
+    [ "$(cat "$tmp/ddc.value")" = 72 ] && [ "$(cat "$tmp/backlight/test_bl/brightness")" = 300 ] && break
+    sleep 0.2
+done
+[ "$(cat "$tmp/ddc.value")" = 72 ] || bad "brightness: the monitor got $(cat "$tmp/ddc.value"), not 72"
+[ "$(cat "$tmp/backlight/test_bl/brightness")" = 300 ] ||
+    bad "brightness: the backlight is at $(cat "$tmp/backlight/test_bl/brightness"), not 300 (30 % of 1000)"
 
 echo "5. Settings (every section)"
 for section in appearance fonts bar lock idle about; do

@@ -101,7 +101,8 @@ programs.spore = {
 
 In niri's config, `spawn-at-startup "spore"` and the shortcuts in
 [`examples/niri.kdl`](examples/niri.kdl). It uses Noto Sans and JetBrains
-Mono, and PipeWire, NetworkManager, BlueZ, UPower and udisks2 for its pages
+Mono, and PipeWire, NetworkManager, BlueZ, UPower and udisks2 for its pages;
+the external monitors' brightness needs `hardware.i2c.enable`
 ([`examples/configuration.nix`](examples/configuration.nix)). Its commands:
 
 - `spore`: the shell.

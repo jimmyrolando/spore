@@ -27,6 +27,9 @@ PanelWindow {
     // Name, user@host and photo for Home (UserInfo.qml).
     property UserInfo user: null
     property DrivesService drives: null
+    // The screens' brightness, read again each time it opens.
+    property BrightnessService brightness: null
+    Component.onCompleted: if (brightness) brightness.refresh()
     // Pairing with an agent (the Bluetooth page).
     property BluetoothAgent bluetoothAgent: null
     // The compositor (Compositor.qml), for the System page.
@@ -41,7 +44,10 @@ PanelWindow {
 
     // The pages' width is the old one with the rail on the side (680 - 60).
     readonly property int panelWidth: 620
-    readonly property int panelHeight: 600
+    // Home holds a row for the screens' brightness (two screens side by side:
+    // CcHome); from a third screen on, it's taller by a row.
+    readonly property int brightnessRows: brightness ? Math.ceil(brightness.displays.length / 2) : 0
+    readonly property int panelHeight: 600 + Math.max(0, brightnessRows - 1) * 68
 
     // Which side of the screen it comes out on, below the bar zone of the widget
     // that opened it: "left", "center" (anchored to the top only: centered) or
@@ -251,6 +257,7 @@ PanelWindow {
             monitor: root.monitor
             caffeine: root.caffeine
             notifications: root.notifications
+            brightness: root.brightness
             onCaffeineToggled: root.caffeineToggled()
             onPageRequested: (id) => root.tabRequested(id)
             onWallpaperPickerRequested: root.wallpaperPickerRequested()

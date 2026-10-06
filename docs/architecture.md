@@ -50,6 +50,7 @@ decides.
 | `WallpaperService.qml` | the wallpaper list, their thumbnails and the videos' frames |
 | `ClipboardService.qml` | the clipboard history (cliphist) |
 | `BluetoothAgent.qml` | pairing with an agent: while a pairing runs, `bluetoothctl` is BlueZ's default agent, and the code to type on a keyboard (or to compare with a phone) shows on the Bluetooth page; the device is trusted once paired |
+| `BrightnessService.qml` | the screens' brightness: external monitors over DDC/CI (ddcutil) and a laptop's backlight, read when the Control Center opens; a slider sends only its latest value |
 | `DrivesService.qml` | external drives (udisks): mount, unmount, eject; and, for Files, the internal disks' volumes worth opening (with their `/etc/fstab` folder) |
 | `SystemTheme.qml` | carries the palette and mode to GTK, kitty, rofi, Zed… ([appearance](appearance.md)) |
 | `Idle.qml` | lock, turn off monitors and suspend on idle, and lock before any sleep |

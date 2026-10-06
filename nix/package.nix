@@ -18,6 +18,7 @@
   curl,
   cliphist,
   wl-clipboard,
+  ddcutil,
   hwdata,
   kdePackages,
 }:
@@ -43,6 +44,8 @@ let
     # Clipboard history (ClipboardService.qml).
     cliphist
     wl-clipboard
+    # The external monitors' brightness (BrightnessService.qml).
+    ddcutil
     # Files (shell/files/): gio opens files with their app.
     glib
     # Files: bsdtar compresses and extracts archives.

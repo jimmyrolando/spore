@@ -23,6 +23,9 @@
   services.upower.enable = true;
   # USB drives: mount, eject, and their folders in Files.
   services.udisks2.enable = true;
+  # The external monitors' brightness over DDC/CI (a laptop's own screen
+  # doesn't need it).
+  hardware.i2c.enable = true;
   # The light/dark mode, the GTK theme and the icons Spore sets go through
   # dconf.
   programs.dconf.enable = true;
