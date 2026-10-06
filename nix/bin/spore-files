@@ -1,0 +1,58 @@
+#!/bin/sh
+# spore-files [folder or file]: opens a Files window (Spore's file manager,
+# shell/files.qml) on that folder, or on a file's folder with the file
+# selected; home by default. If Files is already running, the window opens
+# in that process. Like spore, it runs the checkout in dev mode.
+root=@share@
+dev="${XDG_CONFIG_HOME:-$HOME/.config}/spore/dev-path"
+[ -f "$dev" ] && root="$(cat "$dev")"
+entry="$root/shell/files.qml"
+qs=@quickshell@/bin/quickshell
+
+target="${1:-$HOME}"
+case "$target" in
+# A file:// URI (from another app, maybe with "localhost" as its host): the
+# path, with its %XX decoded. A backslash already in it is doubled first, so
+# printf decodes only those (a "\c" used to cut the path short); the x keeps
+# a trailing newline, which $( ) would drop.
+file://*)
+  target=${target#file://}
+  target=${target#localhost}
+  target=$(printf '%bx' "$(printf '%s' "$target" | sed -e 's/\\/\\\\/g' -e 's/%\([0-9A-Fa-f][0-9A-Fa-f]\)/\\x\1/g')")
+  target=${target%x} ;;
+/*) ;;
+# The Recent place (FilesWindow takes it as a folder).
+recent:*) target=recent:/// ;;
+# Relative to where it's run from (spore-files . in a terminal).
+*) target="$PWD/$target" ;;
+esac
+
+# Files is already open: another window, in the same process.
+"$qs" ipc -p "$entry" call files open "$target" >/dev/null 2>&1 && exit 0
+
+# The session's own values of what changes below, for the apps Files starts
+# (the same as bin/spore's).
+SPORE_SESSION=
+for v in PATH QT_PLUGIN_PATH NIXPKGS_QT6_QML_IMPORT_PATH XDG_DATA_DIRS QT_WAYLAND_DISABLE_WINDOWDECORATION; do
+  if value=$(printenv "$v"); then
+    SPORE_SESSION="$SPORE_SESSION$v=$value
+"
+  else
+    SPORE_SESSION="$SPORE_SESSION-$v
+"
+  fi
+done
+export SPORE_SESSION
+
+export PATH="@runtimePath@:$PATH"
+# The quick view's player (video/preview.qml) runs with this same Quickshell
+# and QtMultimedia, like the video wallpaper's (see bin/spore).
+export SPORE_QUICKSHELL="$qs"
+export NIXPKGS_QT6_QML_IMPORT_PATH="@qtmultimedia@/lib/qt-6/qml${NIXPKGS_QT6_QML_IMPORT_PATH:+:$NIXPKGS_QT6_QML_IMPORT_PATH}"
+export QT_PLUGIN_PATH="@qtmultimedia@/lib/qt-6/plugins:@imagePlugins@${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
+# niri draws no title bars; without prefer-no-csd, Qt would draw its own.
+export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+# The app id niri, the launchers and the bar see (spore-files.desktop).
+export QS_APP_ID=spore-files
+export SPORE_FILES_OPEN="$target"
+exec "$qs" -n -p "$entry"

@@ -1,0 +1,85 @@
+/*
+ * Rofi theme with Spore's palette. The design goes here; the colors come
+ * from rofi-colors.rasi, which Spore generates (shell/services/SystemTheme.qml)
+ * when the palette or the mode changes. Rofi reads it every time it opens, so
+ * it always takes the current palette.
+ *
+ * Design inspired by rofi's Ayu theme. The 12px radius matches niri's
+ * rounded windows (geometry-corner-radius in niri's config).
+ */
+
+* {
+    /* In case rofi-colors.rasi wasn't generated yet: Catppuccin Mocha. */
+    bg:        #1e1e2e;
+    bg-alt:    #313244;
+    fg:        #cdd6f4;
+    fg-muted:  #7f849c;
+    accent:    #89b4fa;
+    on-accent: #1e1e2e;
+}
+
+@import "~/.local/state/spore/rofi-colors.rasi"
+
+* {
+    font:             "JetBrainsMono Nerd Font 11";
+    background-color: transparent;
+    text-color:       @fg;
+}
+
+window {
+    background-color: @bg;
+    border:           2px;
+    border-color:     @accent;
+    border-radius:    12px;
+    padding:          16px;
+    width:            600px;
+}
+
+mainbox {
+    spacing:  12px;
+    children: [ inputbar, listview ];
+}
+
+inputbar {
+    background-color: @bg-alt;
+    border-radius:    6px;
+    padding:          8px 12px;
+    spacing:          8px;
+    children:         [ prompt, entry ];
+}
+
+prompt {
+    text-color: @accent;
+}
+
+entry {
+    placeholder:       "Search…";
+    placeholder-color: @fg-muted;
+}
+
+listview {
+    lines:        8;
+    columns:      1;
+    fixed-height: true;
+    spacing:      4px;
+}
+
+element {
+    padding:       6px 10px;
+    border-radius: 6px;
+    spacing:       10px;
+}
+
+element selected {
+    background-color: @accent;
+    text-color:       @on-accent;
+}
+
+element-icon {
+    size: 1.5em;
+}
+
+element-text {
+    text-color:     inherit;
+    vertical-align: 0.5;
+}

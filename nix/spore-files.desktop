@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=Files
+GenericName=File Manager
+Comment=Browse and open your files
+Exec=@bin@/spore-files %U
+Icon=system-file-manager
+Terminal=false
+Categories=System;FileTools;FileManager;Utility;
+Keywords=folder;explorer;finder;manager;
+# A file manager for folders: it can be their default app (gio mime, xdg-mime).
+MimeType=inode/directory;
+StartupWMClass=spore-files

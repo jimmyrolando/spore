@@ -1,0 +1,20 @@
+// Spore's lines for niri's config (~/.config/niri/config.kdl).
+
+// The shell starts with the session.
+spawn-at-startup "spore"
+
+// Inside your binds { … } block:
+binds {
+    Mod+Alt+L hotkey-overlay-title="Lock the screen" { spawn "spore-ipc" "lock" "lock"; }
+    Mod+Alt+C hotkey-overlay-title="Control Center" { spawn "spore-ipc" "controlcenter" "toggle"; }
+    // Like Cmd+, on a Mac.
+    Mod+Alt+Comma hotkey-overlay-title="Settings" { spawn "spore-ipc" "settings" "toggle"; }
+    Mod+Alt+A hotkey-overlay-title="Wallpaper and palette" { spawn "spore-ipc" "appearance" "toggle"; }
+    Mod+Alt+V hotkey-overlay-title="Clipboard history" { spawn "spore-ipc" "clipboard" "toggle"; }
+    Mod+Alt+P hotkey-overlay-title="Power menu" { spawn "spore-ipc" "power" "toggle"; }
+    Mod+Alt+F hotkey-overlay-title="Files" { spawn "spore-files"; }
+}
+
+// The window borders in Spore's palette. At the end of the file, so they win
+// over the ones above; optional, because it exists once the shell has run.
+include optional=true "~/.local/state/spore/niri.kdl"

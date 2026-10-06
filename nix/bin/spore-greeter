@@ -1,0 +1,13 @@
+#!/bin/sh
+# Greeter for greetd. greetd runs it on a TTY, with no compositor: cage is a
+# minimal one that shows a single app full screen (-s: allows switching TTYs
+# with Ctrl+Alt+Fn; -d: no decorations). cage doesn't support layer-shell:
+# the greeter is a regular window (see greeter/Greeter.qml).
+export PATH="@runtimePath@:$PATH"
+# No title bar, which Qt draws when the compositor doesn't add borders.
+export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+# The output (wlroots/cage logs in blue and quickshell's) goes to the journal
+# and not to the TTY: otherwise it flashes when switching to the session. To
+# read it: journalctl -t spore-greeter
+exec @systemd@/bin/systemd-cat -t spore-greeter \
+    @cage@/bin/cage -s -d -- @quickshell@/bin/quickshell --path @share@/greeter

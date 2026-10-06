@@ -1,0 +1,16 @@
+// Rofi, the app launcher the bar opens, with Spore's theme: this file and
+// spore.rasi go in ~/.config/rofi/ (home.nix puts them there).
+configuration {
+    modi: ["drun", "run", "window"];
+    show-icons: true;
+    icon-theme: "Papirus-Dark";
+    // For apps with Terminal=true.
+    terminal: "kitty";
+    drun-display-format: "{icon} {name}";
+    // The prompts as Nerd Font icons.
+    display-drun: " ";
+    display-run: " ";
+    display-window: " ";
+}
+
+@theme "spore.rasi"

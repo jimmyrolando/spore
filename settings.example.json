@@ -1,0 +1,41 @@
+{
+  "idle": {
+    "lockAfter": 300,
+    "screenOffAfter": 600,
+    "suspendAfter": 1800
+  },
+  "bar": {
+    "launcher": [
+      "rofi",
+      "-show",
+      "drun"
+    ],
+    "clockFormat": "ddd MMM dd  hh:mm",
+    "opacity": 1.0,
+    "style": "full",
+    "layout": {
+      "left": [["launcher", "about"]],
+      "center": [["workspaces"]],
+      "right": [["clipboard", "audio", "bluetooth", "idleInhibitor", "system"], ["clock", "power"]]
+    }
+  },
+  "picker": {
+    "wallpaperDir": "~/Pictures/Wallpapers"
+  },
+  "wallpaper": {
+    "transition": "fade",
+    "videos": true
+  },
+  "lock": {
+    "weather": null,
+    "units": "metric"
+  },
+  "clipboard": {
+    "maxItems": 500
+  },
+  "fonts": {
+    "interface": "Noto Sans",
+    "monospace": "JetBrainsMono Nerd Font Mono",
+    "bar": ""
+  }
+}

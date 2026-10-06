@@ -1,0 +1,49 @@
+#!/bin/sh
+# Starts the session shell. Uses the package's folder, unless the user has a
+# checkout in dev mode (programs.spore.devPath writes ~/.config/spore/dev-path)
+# to edit it with hot reload.
+root=@share@
+dev="${XDG_CONFIG_HOME:-$HOME/.config}/spore/dev-path"
+[ -f "$dev" ] && root="$(cat "$dev")"
+# It used to be called my-shell: the first time, it moves state and cache to
+# the new folders (leaving a link with the old name) and deletes the GTK
+# themes and the zed link with the old name (the shell creates the new ones).
+state="${XDG_STATE_HOME:-$HOME/.local/state}"
+cache="${XDG_CACHE_HOME:-$HOME/.cache}"
+for d in "$state" "$cache"; do
+  if [ -d "$d/my-shell" ] && [ ! -L "$d/my-shell" ] && [ ! -e "$d/spore" ]; then
+    mv "$d/my-shell" "$d/spore" && ln -s spore "$d/my-shell"
+  fi
+done
+rm -rf "$HOME/.local/share/themes/my-shell-a" "$HOME/.local/share/themes/my-shell-b"
+[ -L "${XDG_CONFIG_HOME:-$HOME/.config}/zed/themes/my-shell.json" ] && rm -f "${XDG_CONFIG_HOME:-$HOME/.config}/zed/themes/my-shell.json"
+
+# Apps started from Spore get back the session's own values of the variables
+# Spore's wrappers and Quickshell's change (shell/common/session.js): a line
+# each, "name=value", or "-name" for one the session didn't have.
+SPORE_SESSION=
+for v in PATH QT_PLUGIN_PATH NIXPKGS_QT6_QML_IMPORT_PATH XDG_DATA_DIRS QT_WAYLAND_DISABLE_WINDOWDECORATION; do
+  if value=$(printenv "$v"); then
+    SPORE_SESSION="$SPORE_SESSION$v=$value
+"
+  else
+    SPORE_SESSION="$SPORE_SESSION-$v
+"
+  fi
+done
+export SPORE_SESSION
+
+# What the shell runs on its own, without overriding the system's PATH
+# (niri, rofi, systemctl, kitty, etc. still come from there).
+export PATH="@runtimePath@:$PATH"
+# QtMultimedia for video wallpapers (shell/wallpaper/VideoPlayer.qml).
+# nixpkgs' Quickshell doesn't include it; it's the same Qt, so adding its
+# paths is enough (Quickshell's wrapper puts its own in front).
+export NIXPKGS_QT6_QML_IMPORT_PATH="@qtmultimedia@/lib/qt-6/qml${NIXPKGS_QT6_QML_IMPORT_PATH:+:$NIXPKGS_QT6_QML_IMPORT_PATH}"
+export QT_PLUGIN_PATH="@qtmultimedia@/lib/qt-6/plugins:@imagePlugins@${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
+# The video wallpaper player (video/, see shell/wallpaper/VideoPlayer.qml)
+# runs with this same Quickshell.
+export SPORE_QUICKSHELL="@quickshell@/bin/quickshell"
+# PCI device names (the GPU in About, AboutPanel.qml).
+export SPORE_PCI_IDS="@pciIds@"
+exec @quickshell@/bin/quickshell --path "$root/shell" "$@"

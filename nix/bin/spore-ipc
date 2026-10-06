@@ -1,0 +1,6 @@
+#!/bin/sh
+# spore-ipc <target> <function> [args], e.g.: spore-ipc lock lock
+root=@share@
+dev="${XDG_CONFIG_HOME:-$HOME/.config}/spore/dev-path"
+[ -f "$dev" ] && root="$(cat "$dev")"
+exec @quickshell@/bin/quickshell ipc -p "$root/shell/shell.qml" call "$@"
