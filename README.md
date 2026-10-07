@@ -13,6 +13,16 @@ yazi, Zed, Kate and niri's borders.
 It ships as a flake: two packages, the shell (with Files) and the greeter,
 and their NixOS and home-manager modules.
 
+<!-- DEMO VIDEO: paste the github.com/user-attachments URL on its own line here -->
+
+<p align="center">
+  <img src="assets/screenshots/control-center.webp" width="49%" alt="The Control Center: user card, quick toggles, media, clock and volume">
+  <img src="assets/screenshots/settings.webp" width="49%" alt="Settings, on Appearance: wallpaper, palette and mode">
+</p>
+<p align="center">
+  <img src="assets/screenshots/files.webp" width="98%" alt="Files, with the quick view of a wallpaper">
+</p>
+
 ## Why Spore
 
 Spore is my return to Linux on the desktop after several years away, and my
