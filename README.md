@@ -26,6 +26,12 @@ the help of AI, building your own shell is within anyone's reach, so I made
 one to my taste: its interface is inspired by Noctalia's, and it was written
 with Claude's help.
 
+None of this would have been so easy without
+[Quickshell](https://quickshell.org): it turns a bar, a lockscreen or a whole
+file manager into a few QML files that reload as you save them, and it
+provides the Wayland, PipeWire, Bluetooth and MPRIS plumbing out of the box.
+Spore is, in the end, a pile of QML on top of it.
+
 This is a first version (0.1.0), tested on NixOS 26.05 with niri 26.04,
 and Quickshell 0.3.1 from nixos-unstable.
 
