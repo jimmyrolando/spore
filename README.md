@@ -13,7 +13,7 @@ yazi, Zed, Kate and niri's borders.
 It ships as a flake: two packages, the shell (with Files) and the greeter,
 and their NixOS and home-manager modules.
 
-<!-- DEMO VIDEO: paste the github.com/user-attachments URL on its own line here -->
+https://github.com/user-attachments/assets/29860ee6-0807-400e-bb00-78f9562862b1
 
 <p align="center">
   <img src="assets/screenshots/control-center.webp" width="49%" alt="The Control Center: user card, quick toggles, media, clock and volume">
