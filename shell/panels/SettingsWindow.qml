@@ -179,9 +179,10 @@ PanelWindow {
 
     Process {
         running: root.activeSection === "about"
-        command: ["sh", "-c", "quickshell --version | head -n1 | cut -d' ' -f2"]
+        command: [Quickshell.env("SPORE_QUICKSHELL") || "quickshell", "--version"]
         stdout: StdioCollector {
-            onStreamFinished: root.quickshellVersion = text.trim()
+            // "Quickshell 0.3.1 (revision …)": the second word.
+            onStreamFinished: root.quickshellVersion = text.split("\n")[0].split(" ")[1] || ""
         }
     }
 
