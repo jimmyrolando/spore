@@ -173,8 +173,10 @@ QtObject {
         present = names
     }
 
+    // The proxy only sorts, so it has as many rows as the source: asking it
+    // (rowCount) crashed Quickshell on Qt 6.12.0 (create_mapping).
     function countShown(): void {
-        count = filterText ? matches.count : recent ? recentList.count : proxy.rowCount()
+        count = filterText ? matches.count : recent ? recentList.count : source.count
     }
 
     function refilter(): void {
@@ -189,7 +191,7 @@ QtObject {
             }
         } else if (filterText) {
             const needle = filterText.toLowerCase()
-            for (let row = 0; row < proxy.rowCount(); row++) {
+            for (let row = 0; row < source.count; row++) {
                 const i = proxy.mapToSource(proxy.index(row, 0)).row
                 const name = source.get(i, "fileName")
                 if (!name.toLowerCase().includes(needle)) continue
