@@ -3,7 +3,8 @@
 // The shell starts with the session.
 spawn-at-startup "spore"
 
-// Inside your binds { … } block:
+// Inside your binds { … } block (niri allows only one: if your config already
+// has it, put these lines in it instead of adding another):
 binds {
     Mod+Alt+L hotkey-overlay-title="Lock the screen" { spawn "spore-ipc" "lock" "lock"; }
     Mod+Alt+C hotkey-overlay-title="Control Center" { spawn "spore-ipc" "controlcenter" "toggle"; }

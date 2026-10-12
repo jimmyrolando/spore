@@ -12,7 +12,7 @@ It copies the shell to `~/.local/share/spore`, the commands (`spore`,
 `spore-ipc`, `spore-files`) to `~/.local/bin` and Files to the app launchers.
 Your settings and state are never touched. Then add `spawn-at-startup "spore"`
 and the shortcuts from [`examples/niri.kdl`](../examples/niri.kdl) to niri's
-config.
+config (the `binds` lines go inside the `binds { }` block you already have: niri allows only one).
 
 ## What it needs
 
