@@ -45,6 +45,13 @@ for script in spore spore-ipc spore-files; do
 done
 sed "s|@bin@|$bin|" "$repo/nix/spore-files.desktop" > "$apps/spore-files.desktop"
 
+# The official wallpapers for the grid in Settings, only if the user has no
+# wallpaper folder yet (never into one that exists).
+walls=${XDG_PICTURES_DIR:-$HOME/Pictures}/Wallpapers
+if [ ! -e "$walls" ]; then
+  mkdir -p "$walls" && cp "$repo"/assets/wallpapers/* "$walls/" && echo "The official wallpapers are in $walls."
+fi
+
 echo "Spore installed in $share (commands in $bin)."
 case ":$PATH:" in *":$bin:"*) ;; *) echo "Note: $bin isn't in your PATH." ;; esac
 

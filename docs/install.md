@@ -10,7 +10,7 @@ git clone https://github.com/jimmyrolando/spore && cd spore
 
 It copies the shell to `~/.local/share/spore`, the commands (`spore`,
 `spore-ipc`, `spore-files`) to `~/.local/bin` and Files to the app launchers.
-Your settings and state are never touched. Then add `spawn-at-startup "spore"`
+The five official wallpapers go to `~/Pictures/Wallpapers` if that folder doesn't exist, to fill the grid in Settings. Your settings and state are never touched. Then add `spawn-at-startup "spore"`
 and the shortcuts from [`examples/niri.kdl`](../examples/niri.kdl) to niri's
 config (the `binds` lines go inside the `binds { }` block you already have: niri allows only one). niri starts `spore` from its own environment, so `~/.local/bin` has to be in your PATH at login (`export PATH="$HOME/.local/bin:$PATH"` in `~/.profile` or `~/.bash_profile`).
 
