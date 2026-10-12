@@ -6,11 +6,10 @@ import Quickshell
 // always exposes the same shape, so the bar, notifications, idle, the
 // lockscreen, Settings and About depend on none of them.
 //
-// Today there's one: NiriCompositor.qml. To add another (e.g. Hyprland):
-//   1. HyprlandCompositor.qml with the same properties and functions as
-//      NiriCompositor.qml, in the shape below (Quickshell ships the
-//      Quickshell.Hyprland module: workspaces, active window, dispatch()).
-//   2. Detect it in `kind` and load it with another LazyLoader like niri's.
+// Two for now: NiriCompositor.qml and HyprlandCompositor.qml. To add another:
+//   1. A file like them, with the same properties and functions, in the shape
+//      below.
+//   2. Detect it in `kind` and load it with another LazyLoader like theirs.
 //
 // The shape:
 //   workspaces   [{ id, index, name, output, focused, active, occupied }]
@@ -38,17 +37,23 @@ Scope {
     readonly property string kind: Quickshell.env("NIRI_SOCKET") ? "niri"
         : Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") ? "hyprland"
         : "unknown"
-    // No version for this compositor: niri's (the only one for now).
-    readonly property var backend: niriBackend.item
+    // Anything else gets niri's, the reference one.
+    readonly property var backend: kind === "hyprland" ? hyprlandBackend.item : niriBackend.item
 
     LazyLoader {
         id: niriBackend
-        active: true
+        active: root.kind !== "hyprland"
         NiriCompositor {}
     }
 
-    Component.onCompleted: if (kind !== "niri")
-        console.warn("Compositor: " + kind + " is not supported yet, using niri")
+    LazyLoader {
+        id: hyprlandBackend
+        active: root.kind === "hyprland"
+        HyprlandCompositor {}
+    }
+
+    Component.onCompleted: if (kind === "unknown")
+        console.warn("Compositor: unknown compositor, using niri")
 
     readonly property string name: backend ? backend.name : ""
     readonly property string version: backend ? backend.version : ""
