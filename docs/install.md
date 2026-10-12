@@ -24,13 +24,15 @@ config.
 | `ffmpeg` (with `ffprobe`) | video wallpapers and thumbnails |
 | `glib2` (`gio`), `libarchive` (`bsdtar`), `poppler` (`pdftoppm`) | Files |
 | `cliphist`, `wl-clipboard` | the clipboard |
+| `bluez-utils` on Arch (`bluetoothctl`) | the Bluetooth page |
+| `adw-gtk-theme` (adw-gtk3) | GTK apps in Spore's colors |
 | `dconf`, `curl`, `gawk`, `rofi`, `kitty` | themes, weather, the launcher |
 | `ddcutil` | external monitors' brightness |
 | PipeWire, NetworkManager, BlueZ, UPower, udisks2 | the Control Center's pages |
 | Noto Sans, JetBrainsMono Nerd Font | the fonts |
 
 On Arch: `quickshell niri matugen ffmpeg glib2 libarchive poppler cliphist
-wl-clipboard dconf curl gawk rofi kitty ddcutil swaylock noto-fonts
+wl-clipboard bluez-utils adw-gtk-theme dconf curl gawk rofi kitty ddcutil swaylock noto-fonts
 ttf-jetbrains-mono-nerd qt6-multimedia qt6-imageformats kimageformats`
 (some are in the AUR). Package names may need adjusting.
 
