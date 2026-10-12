@@ -56,6 +56,6 @@ SOFTWARE.
 
 ## Simple Icons (brand logos): CC0 1.0
 
-The brand logos in `shell/common/lucide.js` (the "filled" group, such as the
-NixOS logo) come from [Simple Icons](https://simpleicons.org) and are in the
+The brand logos in `shell/common/lucide.js` (the "filled" group: NixOS and the other
+Linux distributions, and Tux) come from [Simple Icons](https://simpleicons.org) and are in the
 public domain (CC0 1.0). The brands and their logos belong to their owners.
