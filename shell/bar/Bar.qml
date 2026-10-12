@@ -20,6 +20,7 @@ PanelWindow {
     required property SystemMonitor monitor
     // The compositor (Compositor.qml): workspaces and the focused window.
     property Compositor compositor: null
+    required property SystemInfo system
     // History and Do Not Disturb, for the notifications widget.
     property NotificationService notifications: null
     // External drives, for the drives widget.
@@ -108,7 +109,7 @@ PanelWindow {
         id: aboutWidget
         BarButton {
             theme: bar.theme
-            icon: "nixos"
+            icon: system.logo
             tooltip: "About this system"
             onClicked: bar.aboutRequested()
         }

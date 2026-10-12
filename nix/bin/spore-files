@@ -44,12 +44,14 @@ for v in PATH QT_PLUGIN_PATH NIXPKGS_QT6_QML_IMPORT_PATH XDG_DATA_DIRS QT_WAYLAN
 done
 export SPORE_SESSION
 
-export PATH="@runtimePath@:$PATH"
 # The quick view's player (video/preview.qml) runs with this same Quickshell
 # and QtMultimedia, like the video wallpaper's (see bin/spore).
 export SPORE_QUICKSHELL="$qs"
+# nix-only: begin (install.sh removes these lines)
+export PATH="@runtimePath@:$PATH"
 export NIXPKGS_QT6_QML_IMPORT_PATH="@qtmultimedia@/lib/qt-6/qml${NIXPKGS_QT6_QML_IMPORT_PATH:+:$NIXPKGS_QT6_QML_IMPORT_PATH}"
 export QT_PLUGIN_PATH="@qtmultimedia@/lib/qt-6/plugins:@imagePlugins@${QT_PLUGIN_PATH:+:$QT_PLUGIN_PATH}"
+# nix-only: end
 # niri draws no title bars; without prefer-no-csd, Qt would draw its own.
 export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 # The app id niri, the launchers and the bar see (spore-files.desktop).

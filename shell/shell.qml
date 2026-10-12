@@ -945,6 +945,7 @@ ShellRoot {
             settings: shellSettings
             monitor: systemMonitor
             compositor: sessionCompositor
+            system: systemInfo
             caffeine: root.caffeine
             notifications: notificationService
             drives: drivesService

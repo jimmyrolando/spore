@@ -7,7 +7,7 @@ var name = "Spore Shell"
 var shortName = "Spore"
 var wordmark = "spore"
 var slogan = "From one spore, the whole colony grows."
-var description = "A Quickshell desktop for niri on NixOS."
+var description = "A Quickshell desktop for niri."
 var version = "0.1.0"
 
 // Brand colors (the "Spore Shell brand" sheet): the logo, the wordmark and

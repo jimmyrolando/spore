@@ -43,7 +43,7 @@ provides the Wayland, PipeWire, Bluetooth and MPRIS plumbing out of the box.
 Spore is, in the end, a pile of QML on top of it.
 
 This is a first version (0.1.0), tested on NixOS 26.05 with niri 26.04,
-and Quickshell 0.3.1 from nixos-unstable.
+and Quickshell 0.3.1 from nixos-unstable. The manual install was also tried on Arch (Quickshell 0.3.2, Qt 6.12).
 
 ## Principles
 
@@ -65,13 +65,14 @@ change has to respect this:
    than 2 % of one core (measured with a 4K monitor); whatever adds
    something that runs all the time has to justify its cost.
 5. **One reference platform: NixOS with niri.** It's where Spore is built
-   and tested. Other distros will get a manual install, but trying to
+   and tested. Other distros have a manual install, but trying to
    support everything would go against simplicity.
 
 ## Installation
 
-**Other distros:** for now, Spore installs on NixOS. Coming soon: a manual
-install for other distros, so anyone can try it on their own system.
+**Other distros:** [`install.sh`](install.sh) installs it for your user, without
+root ([manual install](docs/install.md)). Tried so far on Arch Linux, with
+Quickshell 0.3.2 and Qt 6.12; the greeter is NixOS-only for now.
 
 Spore comes in two pieces, installed separately:
 
