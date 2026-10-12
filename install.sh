@@ -1,0 +1,69 @@
+#!/bin/sh
+# Installs Spore for the current user, without root: the shell in
+# ~/.local/share/spore, its commands in ~/.local/bin and Files in the app
+# launchers. Meant for distros other than NixOS (there, use the flake).
+#
+# Usage: ./install.sh [--prefix DIR]   (DIR defaults to ~/.local)
+# Remove it with ./uninstall.sh. It never asks for root: what needs it (the
+# lockscreen's PAM service, external monitors' brightness) is only printed.
+set -eu
+
+repo=$(cd "$(dirname "$0")" && pwd)
+prefix=${XDG_DATA_HOME:+${XDG_DATA_HOME%/share}}
+prefix=${prefix:-$HOME/.local}
+[ "${1:-}" = --prefix ] && prefix=${2:?--prefix needs a folder}
+
+share=$prefix/share/spore
+bin=$prefix/bin
+apps=$prefix/share/applications
+
+die() { echo "install.sh: $*" >&2; exit 1; }
+
+qs=$(command -v quickshell) || die "Quickshell isn't installed (see docs/install.md)"
+qs_prefix=$(dirname "$(dirname "$(readlink -f "$qs")")")
+[ -x "$qs_prefix/bin/quickshell" ] || qs_prefix=$(dirname "$(dirname "$qs")")
+
+pci_ids=
+for f in /usr/share/hwdata/pci.ids /usr/share/misc/pci.ids /usr/share/pci.ids; do
+  [ -r "$f" ] && { pci_ids=$f; break; }
+done
+
+rm -rf "$share"
+mkdir -p "$share" "$bin" "$apps"
+cp -r "$repo/shell" "$repo/video" "$repo/assets" "$repo/settings.example.json" "$share/"
+mkdir -p "$share/licenses"
+cp "$repo/LICENSE" "$repo/THIRD-PARTY-NOTICES.md" "$share/licenses/"
+
+# The Nix wrappers, minus the lines that only exist for Nix.
+for script in spore spore-ipc spore-files; do
+  sed -e '/# nix-only: begin/,/# nix-only: end/d' \
+      -e "s|@share@|$share|g" \
+      -e "s|@quickshell@|$qs_prefix|g" \
+      -e "s|@pciIds@|$pci_ids|g" \
+      "$repo/nix/bin/$script" > "$bin/$script"
+  chmod +x "$bin/$script"
+done
+sed "s|@bin@|$bin|" "$repo/nix/spore-files.desktop" > "$apps/spore-files.desktop"
+
+echo "Spore installed in $share (commands in $bin)."
+case ":$PATH:" in *":$bin:"*) ;; *) echo "Note: $bin isn't in your PATH." ;; esac
+
+# What it needs from the system.
+missing=
+for c in niri matugen ffmpeg ffprobe gio bsdtar pdftoppm cliphist wl-copy ddcutil dconf \
+         udisksctl nmcli bluetoothctl systemctl loginctl curl gawk rofi; do
+  command -v "$c" >/dev/null 2>&1 || missing="$missing $c"
+done
+[ -n "$missing" ] && echo "Missing commands (some features need them):$missing"
+
+cat <<MSG
+
+Needs root, once (this script doesn't do it):
+  - Lockscreen: a PAM service named "swaylock". Installing the swaylock
+    package creates it; otherwise, in /etc/pam.d/swaylock: "auth include login"
+    (or system-auth, depending on the distro).
+  - External monitors' brightness: load i2c-dev (/etc/modules-load.d/i2c.conf)
+    and add your user to the i2c group.
+Then in niri's config: spawn-at-startup "spore" (examples/niri.kdl has the shortcuts).
+The greeter isn't installed by this script.
+MSG
