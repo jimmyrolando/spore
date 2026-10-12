@@ -1,7 +1,7 @@
 # Manual install (other distros)
 
-Not tested yet: Spore's reference platform is NixOS with niri. This is the
-path being tested, starting with Arch. It needs systemd.
+Spore's reference platform is NixOS with niri. Tried so far on Arch (Quickshell 0.3.2, Qt 6.12, niri 26.04); this is the
+path to follow elsewhere. It needs systemd.
 
 ```sh
 git clone https://github.com/jimmyrolando/spore && cd spore
