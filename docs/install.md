@@ -12,7 +12,7 @@ It copies the shell to `~/.local/share/spore`, the commands (`spore`,
 `spore-ipc`, `spore-files`) to `~/.local/bin` and Files to the app launchers.
 Your settings and state are never touched. Then add `spawn-at-startup "spore"`
 and the shortcuts from [`examples/niri.kdl`](../examples/niri.kdl) to niri's
-config (the `binds` lines go inside the `binds { }` block you already have: niri allows only one).
+config (the `binds` lines go inside the `binds { }` block you already have: niri allows only one). niri starts `spore` from its own environment, so `~/.local/bin` has to be in your PATH at login (`export PATH="$HOME/.local/bin:$PATH"` in `~/.profile` or `~/.bash_profile`).
 
 ## What it needs
 
@@ -34,7 +34,9 @@ config (the `binds` lines go inside the `binds { }` block you already have: niri
 On Arch: `quickshell niri matugen ffmpeg glib2 libarchive poppler cliphist
 wl-clipboard bluez-utils adw-gtk-theme dconf curl gawk rofi kitty ddcutil swaylock noto-fonts
 ttf-jetbrains-mono-nerd qt6-multimedia qt6-imageformats kimageformats`
-(some are in the AUR). Package names may need adjusting.
+Plus the services: `pipewire-pulse wireplumber networkmanager bluez upower
+udisks2 mesa` (enable `NetworkManager`, `bluetooth`, `upower` and `udisks2`).
+Package names may need adjusting.
 
 ## What needs root (once)
 
