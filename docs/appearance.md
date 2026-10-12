@@ -123,6 +123,7 @@ the mode changes:
 | kitty | `~/.local/state/spore/kitty-{dark,light}.conf`, linked as `~/.config/kitty/*-theme.auto.conf` (if `~/.config/kitty` exists) | live (SIGUSR1; on NixOS the process is called `.kitty-wrapped`) |
 | Kate / KDE | the `[Colors:*]` groups of `~/.config/kdeglobals` and `Color Theme` in `katerc` | on reopen |
 | niri | `~/.local/state/spore/niri.kdl` (border colors, focus-ring off), included at the end of niri's config with `include optional=true` | live |
+| Hyprland | `~/.local/state/spore/hypr/colors.conf` (border colors), sourced from the config with `source = ~/.local/state/spore/hypr/*.conf` | live |
 | rofi | `~/.local/state/spore/rofi-colors.rasi`, which the rofi theme imports with `@import` (one that does: `examples/rofi/spore.rasi`) | the next time it opens |
 | yazi | `~/.local/state/spore/yazi-theme.toml`, linked as `~/.config/yazi/theme.toml` | the next time it opens |
 | Zed | `~/.local/state/spore/zed-theme.json` ("Spore Dark" and "Spore Light"), linked as `~/.config/zed/themes/spore.json`; in Zed: `theme.mode = "system"` and those two themes | the mode live; the palette when Zed reopens |

@@ -91,15 +91,18 @@ lastFocused }`), `focusedWindow`, `outputs`, `cornerRadius`, `name`,
 `powerOffMonitors()`, `quit()`, `emptyWorkspace()`). The rest of the shell
 only uses that. The full shape is documented in the file itself.
 
-Today there's one implementation, `NiriCompositor.qml`: it reads
-`niri msg event-stream` (a single process, no polling) and translates niri's
-data into that shape. Adding another compositor means writing another one,
-for example `HyprlandCompositor.qml` with the `Quickshell.Hyprland` module,
-and loading it in `Compositor.qml`.
+There are two implementations. `NiriCompositor.qml` reads `niri msg
+event-stream` (a single process, no polling) and translates niri's data into
+that shape. `HyprlandCompositor.qml` listens to Hyprland's events through
+the `Quickshell.Hyprland` module and, after a short pause, re-reads the state
+with `hyprctl -j`; since Hyprland's workspaces are global, it makes up each
+one's `index` per monitor, and it has no list of screen captures. Adding
+another compositor means writing another file like these and loading it in
+`Compositor.qml`.
 
-Two niri things live outside the shell: `SystemTheme.qml` writes the border
-colors to `niri.kdl` (as it does for kitty or GTK), and the greeter launches
-the session the user picks.
+Two compositor things live outside the shell: `SystemTheme.qml` writes the
+border colors to `niri.kdl` and `hypr/colors.conf` (as it does for kitty or
+GTK), and the greeter launches the session the user picks.
 
 ### Imports
 

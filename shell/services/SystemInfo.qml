@@ -24,7 +24,7 @@ Scope {
         id: reader
         running: true
         command: ["sh", "-c", `
-            . /etc/os-release; echo "os\t$PRETTY_NAME"; echo "id\t$ID"
+            . /etc/os-release; echo "os\t$PRETTY_NAME"; echo "id\t$ID"; echo "idlike\t$ID_LIKE"
             nixos-version --json 2>/dev/null | tr -d '{}"' | tr ',' '\\n' | sed 's/:/\\t/' | sed 's/^/nix_/'
             echo "user\t$(id -un)@$(cat /etc/hostname 2>/dev/null || uname -n)"
             echo "kernel\tLinux $(uname -r)"
@@ -81,8 +81,22 @@ Scope {
         return model ? [brand, model].filter(s => s).join(" ") : [brand || "GPU", driver ? "(" + driver + ")" : ""].join(" ").trim()
     }
 
-    // The big logo: NixOS has its own; the rest of the distros get a leaf.
-    readonly property string logo: info.id === "nixos" ? "nixos" : "leaf"
+    // The big logo: the distro's (Simple Icons, in lucide.js), found by os-release's
+    // ID and then by the ones in ID_LIKE; Tux for a distro without its own.
+    readonly property var logos: ({
+        "arch": "archlinux", "archlinux": "archlinux", "fedora": "fedora", "debian": "debian",
+        "ubuntu": "ubuntu", "opensuse": "opensuse", "opensuse-leap": "opensuse",
+        "opensuse-tumbleweed": "opensuse", "gentoo": "gentoo", "manjaro": "manjaro",
+        "linuxmint": "linuxmint", "endeavouros": "endeavouros", "void": "voidlinux",
+        "alpine": "alpinelinux", "pop": "popos", "kali": "kalilinux", "rocky": "rockylinux",
+        "almalinux": "almalinux", "rhel": "redhat", "centos": "centos", "cachyos": "cachyos",
+        "nixos": "nixos"
+    })
+    readonly property string logo: {
+        for (const id of [info.id || "", ...(info.idlike || "").split(" ")])
+            if (logos[id]) return logos[id]
+        return "linux"
+    }
 
     readonly property string display: {
         const outputs = compositor ? compositor.outputs : []

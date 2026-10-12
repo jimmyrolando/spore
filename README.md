@@ -5,10 +5,10 @@
 *From one spore, the whole colony grows.*
 
 A [Quickshell](https://quickshell.org) desktop for [niri](https://github.com/niri-wm/niri)
-on NixOS: bar, Control Center, notifications, clipboard, lockscreen, a
+and [Hyprland](https://hypr.land), made on NixOS: bar, Control Center, notifications, clipboard, lockscreen, a
 settings window, a file manager, wallpapers (video too) with transitions, and
 its own greeter for greetd. The palette and the light/dark mode also reach GTK, kitty, rofi,
-yazi, Zed, Kate and niri's borders.
+yazi, Zed, Kate and the compositor's borders.
 
 It ships as a flake: two packages, the shell (with Files) and the greeter,
 and their NixOS and home-manager modules.
@@ -43,7 +43,7 @@ provides the Wayland, PipeWire, Bluetooth and MPRIS plumbing out of the box.
 Spore is, in the end, a pile of QML on top of it.
 
 This is a first version (0.1.0), tested on NixOS 26.05 with niri 26.04,
-and Quickshell 0.3.1 from nixos-unstable. The manual install was also tried on Arch (Quickshell 0.3.2, Qt 6.12).
+and Quickshell 0.3.1 from nixos-unstable. The manual install was also tried on Arch (Quickshell 0.3.2, Qt 6.12), with niri and with Hyprland 0.56 (in a virtual machine only).
 
 ## Principles
 
@@ -65,7 +65,7 @@ change has to respect this:
    than 2 % of one core (measured with a 4K monitor); whatever adds
    something that runs all the time has to justify its cost.
 5. **One reference platform: NixOS with niri.** It's where Spore is built
-   and tested. Other distros have a manual install, but trying to
+   and tested; Hyprland and other distros are supported on a best-effort basis. Other distros have a manual install, but trying to
    support everything would go against simplicity.
 
 ## Installation
@@ -91,6 +91,7 @@ Spore comes in two pieces, installed separately:
 | [`configuration.nix`](examples/configuration.nix) | the system: what the shell uses (audio, network, Bluetooth, drives, fonts) and the greeter |
 | [`home.nix`](examples/home.nix) | each user: the shell and the apps it themes |
 | [`niri.kdl`](examples/niri.kdl) | niri's lines: the shell at startup, the shortcuts, the border colors |
+| [`hyprland.conf`](examples/hyprland.conf) | the same for Hyprland |
 | [`rofi/`](examples/rofi) | the app launcher's theme, in Spore's colors |
 
 In short:
