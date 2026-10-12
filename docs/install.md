@@ -1,6 +1,6 @@
 # Manual install (other distros)
 
-Spore's reference platform is NixOS with niri. Tried so far on Arch (Quickshell 0.3.2, Qt 6.12, niri 26.04); this is the
+Spore's reference platform is NixOS with niri. Tried so far on Arch (Quickshell 0.3.2, Qt 6.12, niri 26.04 and Hyprland 0.56); this is the
 path to follow elsewhere. It needs systemd.
 
 ```sh
@@ -13,6 +13,14 @@ It copies the shell to `~/.local/share/spore`, the commands (`spore`,
 The five official wallpapers go to `~/Pictures/Wallpapers` if that folder doesn't exist, to fill the grid in Settings. Your settings and state are never touched. Then add `spawn-at-startup "spore"`
 and the shortcuts from [`examples/niri.kdl`](../examples/niri.kdl) to niri's
 config (the `binds` lines go inside the `binds { }` block you already have: niri allows only one). niri starts `spore` from its own environment, so `~/.local/bin` has to be in your PATH at login (`export PATH="$HOME/.local/bin:$PATH"` in `~/.profile` or `~/.bash_profile`).
+
+## Hyprland
+
+If you use Hyprland instead of niri, add the lines in
+[`examples/hyprland.conf`](../examples/hyprland.conf) to its config. The shell
+looks the same; the differences are that the bar shows the workspaces that
+exist (Hyprland makes one when you go to it), and there's no indicator for
+ongoing screen captures.
 
 ## What it needs
 
