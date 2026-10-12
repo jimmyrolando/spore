@@ -17,7 +17,7 @@ var appScript = `
     app() {
         program=$(command -v "$1") || return 127
         shift
-        unset SPORE_QUICKSHELL SPORE_PCI_IDS SPORE_FILES_OPEN QS_APP_ID QT_WAYLAND_DISABLE_WINDOWDECORATION
+        unset SPORE_QUICKSHELL SPORE_PACKAGED SPORE_PCI_IDS SPORE_FILES_OPEN QS_APP_ID QT_WAYLAND_DISABLE_WINDOWDECORATION
         set -f
         IFS='
 '

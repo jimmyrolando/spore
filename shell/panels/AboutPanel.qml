@@ -51,8 +51,8 @@ PanelWindow {
         ["Flake", (info.nix_configurationRevision || "").slice(0, 7)],
         ["Kernel", info.kernel],
         ["Uptime", monitor.formatUptime()],
-        ["Packages", info.pkgs_system ? Number(info.pkgs_system).toLocaleString(Qt.locale("en_US"), "f", 0) + " (system) · "
-            + Number(info.pkgs_user || 0).toLocaleString(Qt.locale("en_US"), "f", 0) + " (user)" : ""],
+        ["Packages", info.pkgs_system ? Number(info.pkgs_system).toLocaleString(Qt.locale("en_US"), "f", 0) + (info.pkgs_user ? " (system) · "
+            + Number(info.pkgs_user).toLocaleString(Qt.locale("en_US"), "f", 0) + " (user)" : "") : ""],
         // The desktop environment: the shell itself (brand.js).
         ["DE", Brand.name + " " + Brand.version],
         ["WM", system.wm],
@@ -152,7 +152,7 @@ PanelWindow {
 
                     Icon {
                         Layout.alignment: Qt.AlignHCenter
-                        name: "nixos"
+                        name: system.logo
                         size: 300
                         color: root.logoColor >= 0 ? root.theme.current.ansi[root.logoColor] : root.theme.accent
                         Behavior on color { ColorAnimation { duration: 250 } }

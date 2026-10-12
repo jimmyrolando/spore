@@ -172,10 +172,10 @@ PanelWindow {
     ]
 
     // About: Quickshell's and niri's versions, and where the shell runs from
-    // (the checkout in dev mode, or the package).
+    // (the checkout in dev mode, or the install; the wrapper sets SPORE_PACKAGED).
     property string quickshellVersion: ""
     readonly property string runningFrom: Quickshell.shellDir
-    readonly property bool devMode: !runningFrom.startsWith("/nix/store")
+    readonly property bool devMode: !Quickshell.env("SPORE_PACKAGED")
 
     Process {
         running: root.activeSection === "about"

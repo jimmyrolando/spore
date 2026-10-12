@@ -24,7 +24,7 @@ Scope {
         id: reader
         running: true
         command: ["sh", "-c", `
-            . /etc/os-release; echo "os\t$PRETTY_NAME"
+            . /etc/os-release; echo "os\t$PRETTY_NAME"; echo "id\t$ID"
             nixos-version --json 2>/dev/null | tr -d '{}"' | tr ',' '\\n' | sed 's/:/\\t/' | sed 's/^/nix_/'
             echo "user\t$(id -un)@$(cat /etc/hostname 2>/dev/null || uname -n)"
             echo "kernel\tLinux $(uname -r)"
@@ -40,8 +40,15 @@ Scope {
                 echo "gpu\t$name\t$v\t$drv"
                 break
             done
-            echo "pkgs_system\t$(nix-store -qR /run/current-system 2>/dev/null | wc -l)"
-            echo "pkgs_user\t$(nix-store -qR "/etc/profiles/per-user/$(id -un)" 2>/dev/null | wc -l)"
+            # The package count: NixOS has two (system and user), the others the
+            # distro's own manager.
+            if command -v nix-store >/dev/null 2>&1 && [ -e /run/current-system ]; then
+                echo "pkgs_system\t$(nix-store -qR /run/current-system 2>/dev/null | wc -l)"
+                echo "pkgs_user\t$(nix-store -qR "/etc/profiles/per-user/$(id -un)" 2>/dev/null | wc -l)"
+            else
+                n=$({ pacman -Qq || rpm -qa || dpkg-query -f . -W || apk info; } 2>/dev/null | wc -l)
+                [ "$n" -gt 0 ] && echo "pkgs_system\t$n"
+            fi
             df -B1 --output=used,size / | awk 'NR == 2 { print "disk\\t" $1 "\\t" $2 }'`]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -73,6 +80,9 @@ Scope {
         const model = name ? (name.match(/\[(.*)\]/) || [, name])[1] : ""
         return model ? [brand, model].filter(s => s).join(" ") : [brand || "GPU", driver ? "(" + driver + ")" : ""].join(" ").trim()
     }
+
+    // The big logo: NixOS has its own; the rest of the distros get a leaf.
+    readonly property string logo: info.id === "nixos" ? "nixos" : "leaf"
 
     readonly property string display: {
         const outputs = compositor ? compositor.outputs : []
