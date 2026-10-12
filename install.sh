@@ -52,6 +52,12 @@ if [ ! -e "$walls" ]; then
   mkdir -p "$walls" && cp "$repo"/assets/wallpapers/* "$walls/" && echo "The official wallpapers are in $walls."
 fi
 
+# Rofi in Spore's colors, only if the user has no rofi config yet.
+rofi=${XDG_CONFIG_HOME:-$HOME/.config}/rofi
+if [ ! -e "$rofi/config.rasi" ]; then
+  mkdir -p "$rofi" && cp "$repo/examples/rofi/config.rasi" "$repo/examples/rofi/spore.rasi" "$rofi/" && echo "Rofi's theme is in $rofi."
+fi
+
 echo "Spore installed in $share (commands in $bin)."
 case ":$PATH:" in *":$bin:"*) ;; *) echo "Note: $bin isn't in your PATH." ;; esac
 
