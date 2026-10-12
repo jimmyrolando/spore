@@ -33,8 +33,8 @@ you try different environments quickly, and that's how I found niri: it felt
 right from the very first moment. I started out with
 [Noctalia](https://github.com/noctalia-dev/noctalia), but these days, with
 the help of AI, building your own shell is within anyone's reach, so I made
-one to my taste: its interface is inspired by Noctalia's, and it was written
-with Claude's help.
+one to my taste: its interface is inspired by Noctalia's, and Claude wrote it under
+my direction.
 
 None of this would have been so easy without
 [Quickshell](https://quickshell.org): it turns a bar, a lockscreen or a whole
