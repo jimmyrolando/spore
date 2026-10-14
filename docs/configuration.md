@@ -14,7 +14,7 @@ if the JSON is broken, in which case the previous values are kept.
 
 ## The Settings window
 
-`Mod+Alt+,` (like `Cmd+,` on a Mac), or the Control Center's gear. Six
+`Mod+Alt+,` (like `Cmd+,` on a Mac), or the Control Center's gear. Seven
 sections:
 
 - **Appearance** (the one it opens on by default): the wallpaper grid, the
@@ -24,6 +24,12 @@ sections:
   search box (each one written in its own font).
 - **Bar**: the shape, the background and the widgets (zone, order and which
   ones share a capsule).
+- **Displays**: each monitor's resolution, refresh rate, scale and rotation,
+  and turning it off (not the last one). It goes through the compositor
+  (`niri msg output`, `hyprctl keyword monitor`), so the change lasts until
+  the compositor restarts or reloads its config; to keep it, write it in the
+  compositor's config. After a change it asks "Keep this change?" and goes
+  back by itself after 15 seconds, in case the screen goes black.
 - **Lock screen**: the weather (off by default: when on, Open-Meteo sees your
   IP address every 30 minutes), its location and units.
 - **Idle**: the idle timeouts.
@@ -111,7 +117,7 @@ The Control Center opens below the zone of the widget that was clicked
 | Target | Functions |
 |---|---|
 | `controlcenter` | `toggle`, `open <page>` (`home`, `media`, `audio`, `system`, `network`, `bluetooth`, `drives`, `weather`, `calendar`, `notifications`) |
-| `settings` | `toggle`, `open <section>` (`appearance`, `fonts`, `bar`, `lock`, `idle`, `about`) |
+| `settings` | `toggle`, `open <section>` (`appearance`, `fonts`, `bar`, `displays`, `lock`, `idle`, `about`) |
 | `appearance` | `toggle` (the strip) |
 | `clipboard` | `toggle` |
 | `power` | `toggle` |

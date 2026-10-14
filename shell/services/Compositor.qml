@@ -19,6 +19,10 @@ import Quickshell
 //                   lastFocused }] (lastFocused: seconds, 0 = never)
 //   focusedWindow  one of windows, or null
 //   outputs      [{ name, width, height, refresh, scale }] (the ones on)
+//   displays     [{ name, label, on, modes: [{ width, height, refresh }], mode,
+//                scale, transform }] every monitor, on or off (mode: index in
+//                modes, -1 if off; transform: "normal", "90", "180", "270",
+//                "flipped"…), for Settings > Displays
 //   casts        [{ id, active, output, windowId, pwNodeId }]: ongoing
 //                screen captures (an app records or shares the screen or a
 //                window; pwNodeId is the PipeWire node of the stream)
@@ -29,6 +33,9 @@ import Quickshell
 //   nested       running inside another session, for testing: there the
 //                shell doesn't suspend on idle or change the system theme
 //   focusWorkspace(ws), focusWindow(w), powerOffMonitors(), quit(),
+//   configureDisplay(name, change) with change { mode: { width, height,
+//   refresh } } or { scale } or { transform } or { on }: it lasts until the
+//   compositor restarts or reloads its config,
 //   refreshOutputs(), emptyWorkspace() -> { from, to } (workspaces) or null
 Scope {
     id: root
@@ -61,6 +68,7 @@ Scope {
     readonly property var windows: backend ? backend.windows : []
     readonly property var focusedWindow: backend ? backend.focusedWindow : null
     readonly property var outputs: backend ? backend.outputs : []
+    readonly property var displays: backend ? backend.displays : []
     readonly property var casts: backend ? backend.casts : []
     readonly property int cornerRadius: backend ? backend.cornerRadius : 0
     readonly property int innerRadius: backend ? backend.innerRadius : 0
@@ -71,6 +79,7 @@ Scope {
     function focusWindow(w: var): void { if (backend) backend.focusWindow(w) }
     function powerOffMonitors(): void { if (backend) backend.powerOffMonitors() }
     function quit(): void { if (backend) backend.quit() }
+    function configureDisplay(name: string, change: var): void { if (backend) backend.configureDisplay(name, change) }
     function refreshOutputs(): void { if (backend) backend.refreshOutputs() }
     function emptyWorkspace(): var { return backend ? backend.emptyWorkspace() : null }
 }

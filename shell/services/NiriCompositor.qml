@@ -27,6 +27,8 @@ Scope {
     property var windows: []
     readonly property var focusedWindow: windows.find(w => w.focused) ?? null
     property var outputs: []
+    // Every monitor, on or off, with its modes (see Compositor.qml).
+    property var displays: []
     property var casts: []
 
     // Window corner radius, so the shell's floating panels (Settings, clipboard)
@@ -74,6 +76,34 @@ Scope {
 
     function refreshOutputs(): void {
         outputsReader.rerun()
+    }
+
+    // `niri msg output` changes it until niri restarts or reloads its config.
+    function configureDisplay(name: string, change: var): void {
+        const base = ["niri", "msg", "output", name]
+        if (change.mode) {
+            const m = change.mode
+            Quickshell.execDetached([...base, "mode", m.width + "x" + m.height + "@" + m.refresh.toFixed(3)])
+        }
+        if (change.scale !== undefined) Quickshell.execDetached([...base, "scale", String(change.scale)])
+        if (change.transform !== undefined) Quickshell.execDetached([...base, "transform", change.transform])
+        if (change.on !== undefined) Quickshell.execDetached([...base, change.on ? "on" : "off"])
+        displaysRefresh.restart()
+        displaysLater.restart()
+    }
+
+    // The command runs on its own: ask again a moment later, and once more
+    // in case it hadn't finished.
+    Timer {
+        id: displaysRefresh
+        interval: 400
+        onTriggered: outputsReader.rerun()
+    }
+
+    Timer {
+        id: displaysLater
+        interval: 1500
+        onTriggered: outputsReader.rerun()
     }
 
     // --- Queries ---
@@ -262,12 +292,25 @@ Scope {
         running: true
         command: ["niri", "msg", "-j", "outputs"]
         // Only the ones that are on (with a current mode).
-        onParsed: (data) => root.outputs = Object.keys(data).map(name => {
-            const o = data[name]
-            const m = o.modes && o.current_mode !== null ? o.modes[o.current_mode] : null
-            return m ? { name: name, width: m.width, height: m.height, refresh: m.refresh_rate / 1000,
-                scale: o.logical ? o.logical.scale : 1 } : null
-        }).filter(o => o)
+        onParsed: (data) => {
+            const names = Object.keys(data).sort()
+            root.displays = names.map(name => {
+                const o = data[name]
+                return {
+                    name: name,
+                    label: ((o.make || "") + " " + (o.model || "")).trim() || name,
+                    on: o.current_mode !== null && o.current_mode !== undefined,
+                    modes: (o.modes || []).map(m => ({ width: m.width, height: m.height, refresh: m.refresh_rate / 1000 })),
+                    mode: o.current_mode ?? -1,
+                    scale: o.logical ? o.logical.scale : 1,
+                    transform: o.logical ? o.logical.transform.toLowerCase() : "normal"
+                }
+            })
+            root.outputs = root.displays.filter(d => d.on).map(d => {
+                const m = d.modes[d.mode]
+                return { name: d.name, width: m.width, height: m.height, refresh: m.refresh, scale: d.scale }
+            })
+        }
     }
 
     Process {
