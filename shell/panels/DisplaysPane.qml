@@ -95,7 +95,10 @@ Flickable {
     component Chip: Rectangle {
         id: chip
         property string label: ""
+        // The chosen one: it doesn't react to clicks.
         property bool active: false
+        // Looks like the chosen one but is a button (Keep).
+        property bool primary: false
         property bool enabled: true
         signal clicked()
 
@@ -103,15 +106,15 @@ Flickable {
         implicitHeight: 30
         radius: 7
         opacity: enabled ? 1 : 0.4
-        color: active ? root.theme.accent : chipArea.containsMouse && enabled ? root.buttonHover : root.button
+        color: active || primary ? root.theme.accent : chipArea.containsMouse && enabled ? root.buttonHover : root.button
 
         Label {
             id: chipLabel
             anchors.centerIn: parent
             text: chip.label
-            color: chip.active ? root.theme.textOnAccent : root.theme.text
+            color: chip.active || chip.primary ? root.theme.textOnAccent : root.theme.text
             font.pixelSize: 12
-            font.weight: chip.active ? Font.Medium : Font.Normal
+            font.weight: chip.active || chip.primary ? Font.Medium : Font.Normal
         }
 
         MouseArea {
@@ -235,7 +238,7 @@ Flickable {
                     wrapMode: Text.WordWrap
                 }
                 Chip { label: "Revert"; onClicked: root.revert() }
-                Chip { label: "Keep"; active: true; onClicked: root.keep() }
+                Chip { label: "Keep"; primary: true; onClicked: root.keep() }
             }
         }
 
