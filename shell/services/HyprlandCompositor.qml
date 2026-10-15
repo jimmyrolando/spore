@@ -27,6 +27,8 @@ Scope {
     property var windows: []
     readonly property var focusedWindow: windows.find(w => w.focused) ?? null
     property var outputs: []
+    // Every monitor, on or off, with its modes (see Compositor.qml).
+    property var displays: []
     readonly property var casts: []
 
     // From decoration:rounding, so the shell's panels look like one more window.
@@ -68,6 +70,43 @@ Scope {
 
     function refreshOutputs(): void {
         monitorsReader.rerun()
+    }
+
+    // Hyprland's `monitor` rule sets everything at once, so what isn't changing
+    // is taken from the monitor as it is now. `hyprctl keyword` lasts until
+    // the config is reloaded.
+    function configureDisplay(name: string, change: var): void {
+        const d = displays.find(x => x.name === name)
+        if (!d) return
+        if (change.on === false) {
+            Quickshell.execDetached(["hyprctl", "keyword", "monitor", name + ",disable"])
+        } else {
+            const m = change.mode ?? (d.mode >= 0 ? d.modes[d.mode] : null)
+            const res = m ? m.width + "x" + m.height + "@" + m.refresh.toFixed(3) : "preferred"
+            const scale = change.scale ?? d.scale
+            const transform = change.transform ?? d.transform
+            Quickshell.execDetached(["hyprctl", "keyword", "monitor",
+                [name, res, d.x + "x" + d.y, scale, "transform", transforms.indexOf(transform)].join(",")])
+        }
+        displaysRefresh.restart()
+        displaysLater.restart()
+    }
+
+    // Hyprland's numbers for the transform, by position.
+    readonly property var transforms: ["normal", "90", "180", "270", "flipped", "flipped-90", "flipped-180", "flipped-270"]
+
+    // The command runs on its own: ask again a moment later, and once more
+    // in case it hadn't finished.
+    Timer {
+        id: displaysRefresh
+        interval: 400
+        onTriggered: monitorsReader.rerun()
+    }
+
+    Timer {
+        id: displaysLater
+        interval: 1500
+        onTriggered: monitorsReader.rerun()
     }
 
     // --- Queries ---
@@ -121,14 +160,32 @@ Scope {
     Reader {
         id: monitorsReader
         running: true
-        command: ["hyprctl", "-j", "monitors"]
+        command: ["hyprctl", "-j", "monitors", "all"]
         onParsed: (data) => {
+            // `monitors all` also lists the ones that are off.
+            const on = data.filter(m => !m.disabled)
             const active = {}
-            for (const m of data) active[m.name] = m.activeWorkspace ? m.activeWorkspace.id : null
+            for (const m of on) active[m.name] = m.activeWorkspace ? m.activeWorkspace.id : null
             root.activeByMonitor = active
-            root.focusedMonitor = (data.find(m => m.focused) || {}).name || ""
-            root.outputs = data.map(m => ({ name: m.name, width: m.width, height: m.height,
+            root.focusedMonitor = (on.find(m => m.focused) || {}).name || ""
+            root.outputs = on.map(m => ({ name: m.name, width: m.width, height: m.height,
                 refresh: m.refreshRate, scale: m.scale }))
+            root.displays = data.map(m => {
+                // "3840x2160@60.00Hz"
+                const modes = (m.availableModes || []).map(t => {
+                    const p = /^(\d+)x(\d+)@([\d.]+)Hz$/.exec(t)
+                    return p ? { width: +p[1], height: +p[2], refresh: +p[3] } : null
+                }).filter(x => x)
+                const mode = modes.findIndex(x => x.width === m.width && x.height === m.height
+                    && Math.abs(x.refresh - m.refreshRate) < 0.05)
+                return {
+                    name: m.name,
+                    label: ((m.make || "") + " " + (m.model || "")).trim() || m.name,
+                    on: !m.disabled, modes: modes, mode: m.disabled ? -1 : mode,
+                    scale: m.scale, transform: root.transforms[m.transform] || "normal",
+                    x: m.x, y: m.y
+                }
+            })
             // Which one is active and focused depends on this.
             workspacesReader.rerun()
         }

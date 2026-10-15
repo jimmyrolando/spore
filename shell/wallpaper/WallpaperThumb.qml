@@ -5,7 +5,8 @@ import "../services"
 
 // Thumbnail of a wallpaper (SettingsWindow's grid and the strip). Shows the
 // thumbnail cached by WallpaperService; if it couldn't be generated, the
-// original. Border: accent if it's the current wallpaper or hovered.
+// original. Border: thick accent if it's the current wallpaper, thin accent
+// if hovered.
 Item {
     id: root
 
@@ -74,7 +75,8 @@ Item {
         anchors.fill: parent
         radius: root.radius
         color: "transparent"
-        border.width: 2
+        // Thicker when chosen, so it isn't confused with the one under the mouse.
+        border.width: root.selected ? 4 : 2
         border.color: root.selected || area.containsMouse ? root.theme.accent : root.idleBorder
     }
 

@@ -151,6 +151,8 @@ PanelWindow {
             { title: "Widgets · Right", widgets: "right" },
             { title: "Widgets · Hidden", widgets: "hidden" }
         ]},
+        // Its view is built separately (DisplaysPane.qml).
+        { id: "displays", label: "Displays", desc: "Resolution, scale and rotation", groups: [] },
         { id: "lock", label: "Lock screen", desc: "Shown while the session is locked", groups: [
             { title: "Weather", rows: [
                 { key: "weatherOn", label: "Show weather", hint: "From Open-Meteo every 30 minutes, which sees your IP address. Off by default", type: "toggle" },
@@ -1499,10 +1501,18 @@ PanelWindow {
                     }
                 }
 
+                DisplaysPane {
+                    visible: root.current.id === "displays"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    theme: root.theme
+                    compositor: root.compositor
+                }
+
                 // The other sections: groups of rows, with scrolling if they don't fit.
                 Flickable {
                     id: flick
-                    visible: root.current.custom !== true && root.current.id !== "about"
+                    visible: root.current.custom !== true && root.current.id !== "about" && root.current.id !== "displays"
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
