@@ -78,6 +78,12 @@ Scope {
         outputsReader.rerun()
     }
 
+    // niri's JSON says "Normal", "_90", "Flipped180"; its command line, "normal",
+    // "90", "flipped-180".
+    function transformName(t: string): string {
+        return t.toLowerCase().replace(/^_/, "").replace(/^flipped(?=\d)/, "flipped-")
+    }
+
     // `niri msg output` changes it until niri restarts or reloads its config.
     function configureDisplay(name: string, change: var): void {
         const base = ["niri", "msg", "output", name]
@@ -298,12 +304,13 @@ Scope {
                 const o = data[name]
                 return {
                     name: name,
+                    id: ((o.make || "") + " " + (o.model || "") + " " + (o.serial || "")).trim() || name,
                     label: ((o.make || "") + " " + (o.model || "")).trim() || name,
                     on: o.current_mode !== null && o.current_mode !== undefined,
                     modes: (o.modes || []).map(m => ({ width: m.width, height: m.height, refresh: m.refresh_rate / 1000 })),
                     mode: o.current_mode ?? -1,
                     scale: o.logical ? o.logical.scale : 1,
-                    transform: o.logical ? o.logical.transform.toLowerCase() : "normal"
+                    transform: o.logical ? root.transformName(o.logical.transform) : "normal"
                 }
             })
             root.outputs = root.displays.filter(d => d.on).map(d => {

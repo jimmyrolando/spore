@@ -582,6 +582,14 @@ ShellRoot {
         id: sessionCompositor
     }
 
+    // What's kept in Settings > Displays, put back at startup and when a
+    // monitor is plugged in.
+    DisplayMemory {
+        id: displayMemoryService
+        compositor: sessionCompositor
+        stateDir: root.stateDir
+    }
+
     SystemInfo {
         id: systemInfo
         compositor: sessionCompositor
@@ -844,6 +852,7 @@ ShellRoot {
         SettingsWindow {
             theme: sessionTheme
             compositor: sessionCompositor
+            displayMemory: displayMemoryService
             settings: shellSettings
             wallpapers: wallpaperService
             activeSection: root.settingsSection

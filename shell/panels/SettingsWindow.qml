@@ -57,6 +57,8 @@ PanelWindow {
 
     // Version, name and window radius of the compositor (Compositor.qml).
     property Compositor compositor: null
+    // What's kept in Displays (DisplayMemory.qml).
+    property DisplayMemory displayMemory: null
     readonly property int cornerRadius: compositor ? compositor.cornerRadius : 0
 
     // --- Colors (all from the theme, so the window follows the palette) ---
@@ -1507,6 +1509,7 @@ PanelWindow {
                     Layout.fillHeight: true
                     theme: root.theme
                     compositor: root.compositor
+                    memory: root.displayMemory
                 }
 
                 // The other sections: groups of rows, with scrolling if they don't fit.

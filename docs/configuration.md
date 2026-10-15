@@ -26,10 +26,14 @@ sections:
   ones share a capsule).
 - **Displays**: each monitor's resolution, refresh rate, scale and rotation,
   and turning it off (not the last one). It goes through the compositor
-  (`niri msg output`, `hyprctl keyword monitor`), so the change lasts until
-  the compositor restarts or reloads its config; to keep it, write it in the
-  compositor's config. After a change it asks "Keep this change?" and goes
-  back by itself after 15 seconds, in case the screen goes black.
+  (`niri msg output`, `hyprctl keyword monitor`). After a change it asks
+  "Keep this change?" and goes back by itself after 15 seconds, in case the
+  screen goes black. What you keep is saved in `~/.local/state/spore/displays.json`
+  (by the monitor's make, model and serial, not the port) and the shell puts
+  it back when it starts or the monitor is plugged in. It wins over the
+  compositor's own `output` config (niri takes the first one it finds, so a
+  line in an included file couldn't); "Forget" on a monitor goes back to that
+  config. Turning a monitor off is only put back if another one stays on.
 - **Lock screen**: the weather (off by default: when on, Open-Meteo sees your
   IP address every 30 minutes), its location and units.
 - **Idle**: the idle timeouts.

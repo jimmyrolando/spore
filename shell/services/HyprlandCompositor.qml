@@ -180,6 +180,7 @@ Scope {
                     && Math.abs(x.refresh - m.refreshRate) < 0.05)
                 return {
                     name: m.name,
+                    id: ((m.make || "") + " " + (m.model || "") + " " + (m.serial || "")).trim() || m.name,
                     label: ((m.make || "") + " " + (m.model || "")).trim() || m.name,
                     on: !m.disabled, modes: modes, mode: m.disabled ? -1 : mode,
                     scale: m.scale, transform: root.transforms[m.transform] || "normal",
