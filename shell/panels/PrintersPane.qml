@@ -145,6 +145,53 @@ Flickable {
         run(["sh", "-c", "printf 'Spore test page\\n' | lp -d \"$1\"", "sh", name])
     }
 
+    // --- Finding printers to add ---
+
+    // The printers on the network that say so (mDNS): [{ title, uri, name }].
+    // Driverless ones only: they're added as IPP Everywhere.
+    property var found: []
+    // A search has finished at least once.
+    property bool searched: false
+
+    function search(): void {
+        if (finder.running) return
+        found = []
+        finder.running = true
+    }
+
+    // The name a queue gets: letters, digits, _ and -.
+    function queueName(title: string): string {
+        return title.trim().replace(/\s+/g, "_").replace(/[^A-Za-z0-9_-]/g, "")
+    }
+
+    function parseFound(text: string): void {
+        const list = []
+        for (const line of text.split("\n")) {
+            const cut = line.lastIndexOf(" | ")
+            if (cut < 0) continue
+            const title = line.slice(0, cut).trim()
+            const uri = line.slice(cut + 3).trim()
+            // The same printer can answer as ipp and as ipps: the first one.
+            if (title === "" || uri === "" || list.some(x => x.title === title)) continue
+            list.push({ title: title, uri: uri, name: queueName(title) })
+        }
+        found = list
+        searched = true
+    }
+
+    Process {
+        id: finder
+        // The browse lasts 4 seconds.
+        command: ["ippfind", "-T", "4", "-x", "echo", "{service_name} | {service_uri}", ";"]
+        stdout: StdioCollector {
+            onStreamFinished: root.parseFound(text)
+        }
+    }
+
+    function addPrinter(f: var): void {
+        run(["lpadmin", "-p", f.name, "-E", "-v", f.uri, "-m", "everywhere"])
+    }
+
     function openCups(): void {
         Quickshell.execDetached(Session.command(["xdg-open", "http://localhost:631/admin"]))
     }
@@ -449,13 +496,112 @@ Flickable {
             }
         }
 
+        // Adding: look on the network, then add one that was found.
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: 8
+
+            Label {
+                Layout.fillWidth: true
+                text: "Add a printer"
+                color: root.theme.accent
+                font.pixelSize: 11
+                font.bold: true
+                font.capitalization: Font.AllUppercase
+                font.letterSpacing: 1
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                implicitHeight: finding.implicitHeight
+                radius: 10
+                color: root.groupBg
+                border.width: 1
+                border.color: root.subtle
+
+                ColumnLayout {
+                    id: finding
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    spacing: 0
+
+                    Option {
+                        title: "On the network"
+                        hint: "Printers that announce themselves, added without a driver"
+                        Chip {
+                            label: finder.running ? "Searching…" : root.searched ? "Search again" : "Search"
+                            enabled: !finder.running && !root.busy
+                            onClicked: root.search()
+                        }
+                        Label {
+                            visible: root.searched && !finder.running && root.found.length === 0
+                            height: 30
+                            verticalAlignment: Text.AlignVCenter
+                            leftPadding: 6
+                            text: "Nothing found"
+                            color: root.muted
+                        }
+                    }
+
+                    Repeater {
+                        model: root.found
+
+                        ColumnLayout {
+                            id: hit
+                            required property var modelData
+                            readonly property bool added: root.printers.some(p => p.name === modelData.name)
+                            Layout.fillWidth: true
+                            spacing: 0
+
+                            Rectangle { Layout.fillWidth: true; height: 1; color: root.subtle }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Layout.leftMargin: 16
+                                Layout.rightMargin: 16
+                                Layout.topMargin: 10
+                                Layout.bottomMargin: 10
+                                spacing: 12
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+                                    Label { text: hit.modelData.title; font.pixelSize: 14 }
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: root.whereText(hit.modelData.uri)
+                                        color: root.muted
+                                        font.pixelSize: 12
+                                        elide: Text.ElideRight
+                                    }
+                                }
+                                Label {
+                                    visible: hit.added
+                                    text: "Already added"
+                                    color: root.muted
+                                    font.pixelSize: 12
+                                }
+                                Chip {
+                                    visible: !hit.added
+                                    label: "Add"
+                                    primary: true
+                                    enabled: !root.busy
+                                    onClicked: root.addPrinter(hit.modelData)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         RowLayout {
             Layout.fillWidth: true
             spacing: 12
 
             Label {
                 Layout.fillWidth: true
-                text: "To add a printer or pick its driver, use CUPS' own page. A printer shared by another entry (like a driverless one) can come back after removing it."
+                text: "A printer that needs a driver is added on CUPS' own page, which knows about them."
                 color: root.muted
                 font.pixelSize: 12
                 wrapMode: Text.WordWrap
