@@ -14,7 +14,7 @@ if the JSON is broken, in which case the previous values are kept.
 
 ## The Settings window
 
-`Mod+Alt+,` (like `Cmd+,` on a Mac), or the Control Center's gear. Seven
+`Mod+Alt+,` (like `Cmd+,` on a Mac), or the Control Center's gear. Eight
 sections:
 
 - **Appearance** (the one it opens on by default): the wallpaper grid, the
@@ -34,6 +34,13 @@ sections:
   compositor's own `output` config (niri takes the first one it finds, so a
   line in an included file couldn't); "Forget" on a monitor goes back to that
   config. Turning a monitor off is only put back if another one stays on.
+- **Printers**: the printers CUPS knows: pause or resume, which one is the
+  default, its queue (cancel a job or all of them), a test page, and removing
+  it. It runs `lpstat`, `lpadmin`, `cupsenable`/`cupsdisable`, `cancel` and
+  `lp`, so it needs CUPS and a user allowed to administer it (on NixOS, in
+  `wheel`). The queue is read every 3 seconds, only while this section is
+  open. Adding a printer is left to CUPS' own page (a button opens
+  `localhost:631/admin`), which knows about drivers.
 - **Lock screen**: the weather (off by default: when on, Open-Meteo sees your
   IP address every 30 minutes), its location and units.
 - **Idle**: the idle timeouts.
@@ -121,7 +128,7 @@ The Control Center opens below the zone of the widget that was clicked
 | Target | Functions |
 |---|---|
 | `controlcenter` | `toggle`, `open <page>` (`home`, `media`, `audio`, `system`, `network`, `bluetooth`, `drives`, `weather`, `calendar`, `notifications`) |
-| `settings` | `toggle`, `open <section>` (`appearance`, `fonts`, `bar`, `displays`, `lock`, `idle`, `about`) |
+| `settings` | `toggle`, `open <section>` (`appearance`, `fonts`, `bar`, `displays`, `printers`, `lock`, `idle`, `about`) |
 | `appearance` | `toggle` (the strip) |
 | `clipboard` | `toggle` |
 | `power` | `toggle` |
