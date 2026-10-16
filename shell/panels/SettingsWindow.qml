@@ -155,6 +155,8 @@ PanelWindow {
         ]},
         // Its view is built separately (DisplaysPane.qml).
         { id: "displays", label: "Displays", desc: "Resolution, scale and rotation", groups: [] },
+        // Its view is built separately (PrintersPane.qml).
+        { id: "printers", label: "Printers", desc: "Default, queues and test page", groups: [] },
         { id: "lock", label: "Lock screen", desc: "Shown while the session is locked", groups: [
             { title: "Weather", rows: [
                 { key: "weatherOn", label: "Show weather", hint: "From Open-Meteo every 30 minutes, which sees your IP address. Off by default", type: "toggle" },
@@ -1512,10 +1514,17 @@ PanelWindow {
                     memory: root.displayMemory
                 }
 
+                PrintersPane {
+                    visible: root.current.id === "printers"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    theme: root.theme
+                }
+
                 // The other sections: groups of rows, with scrolling if they don't fit.
                 Flickable {
                     id: flick
-                    visible: root.current.custom !== true && root.current.id !== "about" && root.current.id !== "displays"
+                    visible: root.current.custom !== true && root.current.id !== "about" && root.current.id !== "displays" && root.current.id !== "printers"
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true

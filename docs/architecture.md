@@ -67,8 +67,9 @@ chosen page) and one page per file: `CcHome`, `CcMedia`, `CcAudio`,
 `CcCalendar`, `CcNotifications`. Each page is created when shown (so the
 wifi only scans for networks with Network open).
 
-**`panels/`**: the other windows: `SettingsWindow` (with `DisplaysPane`,
-its monitors section, which goes through `Compositor.configureDisplay`), `AboutPanel`,
+**`panels/`**: the other windows: `SettingsWindow` (with `DisplaysPane`, the monitors section, which goes through
+`Compositor.configureDisplay`, and `PrintersPane`, the CUPS one, which runs
+its commands only while open), `AboutPanel`,
 `ClipboardPanel`, `PowerMenu`, `NotificationPopups`, `NotificationCard` and
 `FilePicker` (the file and folder picker: a layer above everything, not a
 window niri would put in the tiling; anyone requests it from `shell.qml`
