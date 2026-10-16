@@ -189,7 +189,11 @@ Flickable {
     }
 
     function addPrinter(f: var): void {
-        run(["lpadmin", "-p", f.name, "-E", "-v", f.uri, "-m", "everywhere"])
+        // A printer in standby can miss the first question CUPS asks it ("No
+        // IPP attributes"), so it's tried three times, a few seconds apart.
+        run(["sh", "-c",
+            "for i in 1 2 3; do lpadmin -p \"$1\" -E -v \"$2\" -m everywhere && exit 0; sleep 3; done; exit 1",
+            "sh", f.name, f.uri])
     }
 
     function openCups(): void {
