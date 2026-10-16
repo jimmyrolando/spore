@@ -19,7 +19,8 @@ import Quickshell
 //                   lastFocused }] (lastFocused: seconds, 0 = never)
 //   focusedWindow  one of windows, or null
 //   outputs      [{ name, width, height, refresh, scale }] (the ones on)
-//   displays     [{ name, label, on, modes: [{ width, height, refresh }], mode,
+//   displays     [{ name, id (make model serial: stays when the port changes),
+//                label, on, modes: [{ width, height, refresh }], mode,
 //                scale, transform }] every monitor, on or off (mode: index in
 //                modes, -1 if off; transform: "normal", "90", "180", "270",
 //                "flipped"…), for Settings > Displays

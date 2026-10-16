@@ -7,15 +7,17 @@ import "../services"
 // rotation, and turning it off. It goes through Compositor.configureDisplay,
 // so it works with whichever compositor is running.
 //
-// Those changes last until the compositor restarts or reloads its config. A
-// change of mode, scale or rotation can leave a black screen, so after one
-// the pane asks to keep it and goes back by itself when nobody answers
-// (also if Settings is closed meanwhile).
+// A change of mode, scale or rotation can leave a black screen, so after one
+// the pane asks to keep it and goes back by itself when nobody answers (also
+// if Settings is closed meanwhile). What's kept is remembered by
+// DisplayMemory, which puts it back when the shell starts or the monitor is
+// plugged in (the compositor itself forgets it when it restarts).
 Flickable {
     id: root
 
     required property Theme theme
     required property Compositor compositor
+    property DisplayMemory memory: null
 
     // How long a change waits to be kept.
     readonly property int confirmSeconds: 15
@@ -56,8 +58,21 @@ Flickable {
     }
 
     function keep(): void {
+        const name = pending ? pending.name : ""
         countdown.stop()
         pending = null
+        if (!memory || name === "") return
+        // The list may not have caught up with the change yet.
+        compositor.refreshOutputs()
+        remember.name = name
+        remember.restart()
+    }
+
+    Timer {
+        id: remember
+        property string name: ""
+        interval: 600
+        onTriggered: if (root.memory) root.memory.remember(name)
     }
 
     function revert(): void {
@@ -256,6 +271,7 @@ Flickable {
                 id: card
                 required property var modelData
                 readonly property var d: modelData
+                readonly property bool remembered: root.memory !== null && root.memory.saved[d.id] !== undefined
 
                 Layout.fillWidth: true
                 spacing: 8
@@ -368,6 +384,18 @@ Flickable {
                                 }
                             }
                         }
+
+                        Rectangle { visible: card.remembered; Layout.fillWidth: true; height: 1; color: root.subtle }
+
+                        Option {
+                            visible: card.remembered
+                            title: "Remembered"
+                            hint: "Put back when Spore starts or this monitor is plugged in"
+                            Chip {
+                                label: "Forget"
+                                onClicked: root.memory.forget(card.d.id)
+                            }
+                        }
                     }
                 }
             }
@@ -375,7 +403,7 @@ Flickable {
 
         Label {
             Layout.fillWidth: true
-            text: "These changes last until the compositor restarts or reloads its configuration."
+            text: "What you keep is remembered and put back when Spore starts, over what the compositor's configuration says. Forget it to go back to that."
             color: root.muted
             font.pixelSize: 12
             wrapMode: Text.WordWrap

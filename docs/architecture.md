@@ -42,6 +42,7 @@ decides.
 | File | What it is |
 |---|---|
 | `Settings.qml` | reads and saves `~/.config/spore/settings.json` |
+| `DisplayMemory.qml` | remembers what Settings > Displays kept (`$state/displays.json`) and puts it back |
 | `Compositor.qml`, `NiriCompositor.qml` | the compositor in a neutral shape (workspaces, windows, screens, radius, focus, turn off monitors, quit) and its niri implementation (event-driven, no polling). See below |
 | `NotificationService.qml` | the notification server: history, unread, Do Not Disturb |
 | `SystemMonitor.qml` | CPU, memory, GPU, network and disks, measured once for everyone |
