@@ -39,8 +39,10 @@ sections:
   it. It runs `lpstat`, `lpadmin`, `cupsenable`/`cupsdisable`, `cancel` and
   `lp`, so it needs CUPS and a user allowed to administer it (on NixOS, in
   `wheel`). The queue is read every 3 seconds, only while this section is
-  open. Adding a printer is left to CUPS' own page (a button opens
-  `localhost:631/admin`), which knows about drivers.
+  open. "Search" looks for printers that announce themselves on the network
+  (`ippfind`, mDNS: it needs Avahi) and "Add" sets one up without a driver
+  (`lpadmin -m everywhere`). One that needs a driver is added on CUPS' own
+  page (a button opens `localhost:631/admin`), which knows about them.
 - **Lock screen**: the weather (off by default: when on, Open-Meteo sees your
   IP address every 30 minutes), its location and units.
 - **Idle**: the idle timeouts.

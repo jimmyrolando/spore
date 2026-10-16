@@ -37,7 +37,7 @@ ongoing screen captures.
 | `dconf`, `curl`, `gawk`, `rofi`, `kitty` | themes, weather, the launcher |
 | `papirus-icon-theme` | the icons in rofi and GTK apps |
 | `ddcutil` | external monitors' brightness |
-| `cups` (`lpstat`, `lpadmin`) | the Printers section |
+| `cups` (`lpstat`, `lpadmin`, `ippfind`), `avahi` | the Printers section (finding printers needs Avahi) |
 | PipeWire, NetworkManager, BlueZ, UPower, udisks2 | the Control Center's pages |
 | Noto Sans, JetBrainsMono Nerd Font | the fonts |
 
