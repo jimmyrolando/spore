@@ -59,6 +59,8 @@ PanelWindow {
     property Compositor compositor: null
     // What's kept in Displays (DisplayMemory.qml).
     property DisplayMemory displayMemory: null
+    // The machine's details, for the printers' test page.
+    property SystemInfo system: null
     readonly property int cornerRadius: compositor ? compositor.cornerRadius : 0
 
     // --- Colors (all from the theme, so the window follows the palette) ---
@@ -1519,6 +1521,7 @@ PanelWindow {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     theme: root.theme
+                    system: root.system
                 }
 
                 // The other sections: groups of rows, with scrolling if they don't fit.
