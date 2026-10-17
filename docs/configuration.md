@@ -113,6 +113,7 @@ capsule with the one above.
 | `memory` | icon and a usage bar | Control Center → System |
 | `workspaces` | niri's workspaces | go to the workspace |
 | `clipboard` | clipboard | the history |
+| `appImages` | grid | the AppImages in a folder (newest of each) |
 | `audio` | volume (wheel: ±5 %) | Control Center → Audio |
 | `bluetooth`, `network` | status | its Control Center page |
 | `idleInhibitor` | coffee cup: no locking or suspending | on / off |
@@ -121,6 +122,16 @@ capsule with the one above.
 | `drives` | eject (only with external drives) | Control Center → Drives |
 | `clock` | date and time | Control Center → Calendar |
 | `power` | power | the power menu |
+
+The `appImages` widget isn't on the bar by default (add it in Settings → Bar, under
+Hidden). It opens a list of the AppImages in a folder (`~/Applications` by default),
+only the newest version of each (`OpenCADStudio-v2026.41-linux-x86_64.AppImage` is
+"OpenCADStudio 2026.41", with the older ones counted): type to search, Enter or a
+click to run it, and one that's already running says "Open". The gear on its row
+has the folder and "Run with": a command put before the file; empty, it uses
+`appimage-run` if it's installed (NixOS needs it; it runs files that aren't
+executable) and the file itself otherwise. Nothing runs by itself: only the folder
+you choose is listed, and one starts when you pick it.
 
 The Control Center opens below the zone of the widget that was clicked
 (left, center or right).
@@ -135,6 +146,7 @@ The Control Center opens below the zone of the widget that was clicked
 | `settings` | `toggle`, `open <section>` (`appearance`, `fonts`, `bar`, `displays`, `printers`, `lock`, `idle`, `about`) |
 | `appearance` | `toggle` (the strip) |
 | `clipboard` | `toggle` |
+| `appimages` | `toggle` |
 | `power` | `toggle` |
 | `about` | `toggle` |
 | `lock` | `lock`, `isLocked` |

@@ -88,7 +88,7 @@ Scope {
     property string barStyle: defaults.bar.style
     // The bar's widgets per zone (see defaults.bar.layout and Bar.qml).
     readonly property var barWidgets: ["launcher", "about", "controlCenter", "activeWindow", "apps", "system", "cpu", "memory", "gpu", "workspaces",
-        "clipboard", "audio", "bluetooth", "network", "idleInhibitor", "screencast", "notifications", "drives", "clock", "power"]
+        "clipboard", "appImages", "audio", "bluetooth", "network", "idleInhibitor", "screencast", "notifications", "drives", "clock", "power"]
     property var barLayout: defaults.bar.layout
     property var widgetOptions: defaults.bar.widgetOptions
 
@@ -98,6 +98,10 @@ Scope {
     readonly property var widgetOptionDefs: ({
         activeWindow: [
             { key: "showIcon", label: "Show icon", hint: "The app icon next to its name", type: "toggle", fallback: true }
+        ],
+        appImages: [
+            { key: "folder", label: "Folder", hint: "The AppImages listed come from here", type: "text", fallback: "~/Applications" },
+            { key: "runner", label: "Run with", hint: "A command put before the file. Empty: appimage-run if installed, else the file itself", type: "text", fallback: "" }
         ]
     })
 

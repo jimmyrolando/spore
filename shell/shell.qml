@@ -529,6 +529,12 @@ ShellRoot {
         maxItems: shellSettings.clipboardMaxItems
     }
 
+    // The AppImages in a folder: the service reads it when the panel opens.
+    AppImagesService {
+        id: appImagesService
+        settings: shellSettings
+    }
+
     // --- Power menu (PowerMenu.qml) ---
     property bool powerMenuOpen: false
 
@@ -812,6 +818,27 @@ ShellRoot {
         }
     }
 
+    property bool appImagesOpen: false
+
+    // qs ipc call appimages toggle
+    IpcHandler {
+        target: "appimages"
+        function toggle(): void {
+            root.appImagesOpen = !root.appImagesOpen
+        }
+    }
+
+    LazyLoader {
+        active: root.appImagesOpen
+
+        AppImagePanel {
+            compositor: sessionCompositor
+            theme: sessionTheme
+            appImages: appImagesService
+            onCloseRequested: root.appImagesOpen = false
+        }
+    }
+
     // Wallpapers in the folder and their thumbnails, shared by both.
     WallpaperService {
         id: wallpaperService
@@ -962,6 +989,7 @@ ShellRoot {
             onCaffeineToggled: root.caffeine = !root.caffeine
             onAboutRequested: root.aboutOpen = !root.aboutOpen
             onClipboardRequested: root.clipboardOpen = !root.clipboardOpen
+            onAppImagesRequested: root.appImagesOpen = !root.appImagesOpen
             onControlCenterRequested: (tab, side) => root.openControlCenter(tab, side)
             onPowerRequested: root.powerMenuOpen = !root.powerMenuOpen
         }

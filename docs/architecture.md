@@ -50,6 +50,7 @@ decides.
 | `Weather.qml`, `Geocoder.qml`, `Sun.qml` | weather (Open-Meteo), place lookup, sunrise and sunset |
 | `WallpaperService.qml` | the wallpaper list, their thumbnails and the videos' frames |
 | `ClipboardService.qml` | the clipboard history (cliphist) |
+| `AppImagesService.qml` | the AppImages in a folder (names and versions in `common/appimages.js`) and which are running (the `APPIMAGE` variable of their processes) |
 | `BluetoothAgent.qml` | pairing with an agent: while a pairing runs, `bluetoothctl` is BlueZ's default agent, and the code to type on a keyboard (or to compare with a phone) shows on the Bluetooth page; the device is trusted once paired |
 | `BrightnessService.qml` | the screens' brightness: external monitors over DDC/CI (ddcutil) and a laptop's backlight, read when the Control Center opens; a slider sends only its latest value |
 | `DrivesService.qml` | external drives (udisks): mount, unmount, eject; and, for Files, the internal disks' volumes worth opening (with their `/etc/fstab` folder) |
@@ -71,7 +72,7 @@ wifi only scans for networks with Network open).
 `Compositor.configureDisplay`, and `PrintersPane`, the CUPS one (with `PrinterTestPage`,
 the sheet it prints), which runs
 its commands only while open), `AboutPanel`,
-`ClipboardPanel`, `PowerMenu`, `NotificationPopups`, `NotificationCard` and
+`ClipboardPanel`, `AppImagePanel`, `PowerMenu`, `NotificationPopups`, `NotificationCard` and
 `FilePicker` (the file and folder picker: a layer above everything, not a
 window niri would put in the tiling; anyone requests it from `shell.qml`
 with `openPicker({ purpose, mode, title, folder, filters })`).
@@ -132,7 +133,7 @@ against the disk. What sits next to the file (the shaders) does work with
 
 ### Windows that exist only while open
 
-The Control Center, Settings, About, the clipboard and the power menu are
+The Control Center, Settings, About, the clipboard, the AppImages and the power menu are
 loaded with a `LazyLoader` that depends on a `shell.qml` state
 (`controlCenterOpen`, `ui`…). That's why their `IpcHandler`s live in
 `shell.qml`: they have to exist even when the window doesn't.

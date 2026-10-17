@@ -346,7 +346,7 @@ PanelWindow {
     ]
     readonly property var widgetLabels: ({
         launcher: "Launcher", about: "About (NixOS logo)", controlCenter: "Control Center", activeWindow: "Active window", apps: "Open apps",
-        system: "System", cpu: "CPU", memory: "Memory", gpu: "GPU", workspaces: "Workspaces", clipboard: "Clipboard",
+        system: "System", cpu: "CPU", memory: "Memory", gpu: "GPU", workspaces: "Workspaces", clipboard: "Clipboard", appImages: "AppImages",
         audio: "Volume", bluetooth: "Bluetooth", network: "Network", idleInhibitor: "Idle inhibitor", screencast: "Screen sharing", notifications: "Notifications", drives: "Drives",
         clock: "Clock", power: "Power"
     })
