@@ -508,8 +508,16 @@ Scope {
             status=0
 
             # tmp + mv: nobody reads a half-written file. .$$ because the shell of a
-            # nested test session runs this at the same time.
-            put() { printf '%s' "$2" > "$1.tmp.$$" && mv "$1.tmp.$$" "$1" || status=1; }
+            # nested test session runs this at the same time. A file that already
+            # says the same is left alone: the shell writes all of these each time
+            # it starts or reloads, and niri re-reads its config (it includes
+            # niri.kdl) and apps re-read their themes whenever one is replaced. The
+            # x keeps the trailing newlines the substitution would drop.
+            put() {
+                old=$(cat "$1" 2>/dev/null; printf x)
+                [ "$old" = "$2x" ] && return 0
+                printf '%s' "$2" > "$1.tmp.$$" && mv "$1.tmp.$$" "$1" || status=1
+            }
 
             # key=value in [section] of a KDE .ini (without kwriteconfig6).
             ini_set() {
