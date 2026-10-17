@@ -68,7 +68,8 @@ chosen page) and one page per file: `CcHome`, `CcMedia`, `CcAudio`,
 wifi only scans for networks with Network open).
 
 **`panels/`**: the other windows: `SettingsWindow` (with `DisplaysPane`, the monitors section, which goes through
-`Compositor.configureDisplay`, and `PrintersPane`, the CUPS one, which runs
+`Compositor.configureDisplay`, and `PrintersPane`, the CUPS one (with `PrinterTestPage`,
+the sheet it prints), which runs
 its commands only while open), `AboutPanel`,
 `ClipboardPanel`, `PowerMenu`, `NotificationPopups`, `NotificationCard` and
 `FilePicker` (the file and folder picker: a layer above everything, not a

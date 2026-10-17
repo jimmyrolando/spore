@@ -35,7 +35,9 @@ sections:
   line in an included file couldn't); "Forget" on a monitor goes back to that
   config. Turning a monitor off is only put back if another one stays on.
 - **Printers**: the printers CUPS knows: pause or resume, which one is the
-  default, its queue (cancel a job or all of them), a test page, and removing
+  default, its queue (cancel a job or all of them), a test page (a sheet drawn
+  by the shell, with the Spore mark, the machine's details and patterns for
+  color, gray, text and lines, printed as an image), and removing
   it. It runs `lpstat`, `lpadmin`, `cupsenable`/`cupsdisable`, `cancel` and
   `lp`, so it needs CUPS and a user allowed to administer it (on NixOS, in
   `wheel`). The queue is read every 3 seconds, only while this section is

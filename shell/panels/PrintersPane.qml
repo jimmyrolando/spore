@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import "../common"
+import "../services"
 import "../common/session.js" as Session
 
 // Settings > Printers: the printers CUPS knows, which one is the default, their
@@ -145,8 +146,53 @@ Flickable {
     function remove(name: string): void { run(["lpadmin", "-x", name]) }
     function cancelJob(id: string): void { run(["cancel", id]) }
     function cancelAll(name: string): void { run(["cancel", "-a", name]) }
-    function testPage(name: string): void {
-        run(["sh", "-c", "printf 'Spore test page\\n' | lp -d \"$1\"", "sh", name])
+
+    // --- The test page ---
+
+    // For the details on the sheet (the machine's, like About's).
+    property SystemInfo system: null
+    // The printer the sheet is being drawn for ({ name, uri }), null if none.
+    property var testFor: null
+
+    function testPage(p: var): void {
+        if (busy || testFor) return
+        message = ""
+        confirming = ""
+        testFor = p
+        sheetLoader.active = true
+    }
+
+    // The sheet is only built while it's drawn: saved as an image in the
+    // runtime directory, handed to lp, and the image removed after.
+    Loader {
+        id: sheetLoader
+        active: false
+        x: -5000
+        sourceComponent: PrinterTestPage {
+            theme: root.theme
+            system: root.system
+        }
+        onLoaded: {
+            const p = root.testFor
+            item.printer = p.name
+            item.address = p.uri
+            item.printed = Qt.formatDateTime(new Date(), "d MMM yyyy · hh:mm")
+            // Letter where inches are used, A4 elsewhere; lp fits it to the
+            // paper either way.
+            item.paper = Qt.locale().measurementSystem === Locale.ImperialUSSystem ? "Letter" : "A4"
+            const file = (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/spore-test-page.png"
+            // At 3 times the size: about 290 dpi.
+            item.grabToImage(result => {
+                root.testFor = null
+                sheetLoader.active = false
+                if (!result.saveToFile(file)) {
+                    root.message = "Could not draw the test page"
+                    return
+                }
+                root.run(["sh", "-c", "lp -d \"$1\" -t 'Spore test page' \"$2\"; rc=$?; rm -f \"$2\"; exit $rc",
+                    "sh", p.name, file])
+            }, Qt.size(item.width * 3, item.height * 3))
+        }
     }
 
     // --- Finding printers to add ---
@@ -472,8 +518,8 @@ Flickable {
                             title: "Printer"
                             Chip {
                                 label: "Print a test page"
-                                enabled: !root.busy && card.p.state !== "paused"
-                                onClicked: root.testPage(card.p.name)
+                                enabled: !root.busy && !root.testFor && card.p.state !== "paused"
+                                onClicked: root.testPage(card.p)
                             }
                             Chip {
                                 visible: root.confirming !== card.p.name

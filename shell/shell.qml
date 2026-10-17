@@ -853,6 +853,7 @@ ShellRoot {
             theme: sessionTheme
             compositor: sessionCompositor
             displayMemory: displayMemoryService
+            system: systemInfo
             settings: shellSettings
             wallpapers: wallpaperService
             activeSection: root.settingsSection

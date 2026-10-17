@@ -17,11 +17,14 @@ Item {
     property real size: 64
     property bool mono: false
     property color color: theme.ink2
+    // The soil is Ink on a light background and Bone on a dark one: the theme's
+    // by default, or what is under it (paper is always light).
+    property bool onDark: theme.isDark
 
     readonly property real k: size / 64
     readonly property color center: mono ? color : Brand.colors.spore
     readonly property color side: mono ? color : Brand.colors.mycel
-    readonly property color ground: mono ? color : (theme.isDark ? Brand.colors.bone : Brand.colors.ink)
+    readonly property color ground: mono ? color : (onDark ? Brand.colors.bone : Brand.colors.ink)
 
     implicitWidth: size
     implicitHeight: size
