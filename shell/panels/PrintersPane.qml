@@ -29,6 +29,9 @@ Flickable {
     property string message: ""
     // The printer waiting for "Remove for good?".
     property string confirming: ""
+    // The printer being added (its queue name), "" if none: it can take a minute
+    // if the printer is in standby.
+    property string adding: ""
 
     clip: true
     contentHeight: column.implicitHeight + 44
@@ -130,6 +133,7 @@ Flickable {
             id: actionErrors
         }
         onExited: (code) => {
+            root.adding = ""
             root.message = code === 0 ? "" : actionErrors.text.trim() || "CUPS refused (exit " + code + ")"
             root.refresh()
         }
@@ -189,6 +193,8 @@ Flickable {
     }
 
     function addPrinter(f: var): void {
+        if (busy) return
+        adding = f.name
         // A printer in standby can miss the first question CUPS asks it ("No
         // IPP attributes"), so it's tried three times, a few seconds apart.
         run(["sh", "-c",
@@ -587,7 +593,7 @@ Flickable {
                                 }
                                 Chip {
                                     visible: !hit.added
-                                    label: "Add"
+                                    label: root.adding === hit.modelData.name ? "Adding…" : "Add"
                                     primary: true
                                     enabled: !root.busy
                                     onClicked: root.addPrinter(hit.modelData)
