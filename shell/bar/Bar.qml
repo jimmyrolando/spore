@@ -31,6 +31,7 @@ PanelWindow {
     // Click on the NixOS logo: shell.qml opens/closes About (AboutPanel.qml).
     signal aboutRequested()
     signal clipboardRequested()
+    signal appImagesRequested()
     // The Control Center tab to open ("audio", "bluetooth", "network") and the
     // zone of the widget that asked for it ("left", "center" or "right"): the
     // panel comes out on that side.
@@ -238,6 +239,16 @@ PanelWindow {
     }
 
     Component {
+        id: appImagesWidget
+        BarButton {
+            theme: bar.theme
+            icon: "layout-grid"
+            tooltip: "AppImages"
+            onClicked: bar.appImagesRequested()
+        }
+    }
+
+    Component {
         id: audioWidget
         Audio {
             theme: bar.theme
@@ -296,7 +307,7 @@ PanelWindow {
 
     readonly property var widgetComponents: ({
         launcher: launcherWidget, about: aboutWidget, controlCenter: controlCenterWidget, activeWindow: activeWindowWidget, apps: appsWidget, screencast: screencastWidget,
-        system: systemWidget, cpu: cpuWidget, memory: memoryWidget, gpu: gpuWidget, workspaces: workspacesWidget, clipboard: clipboardWidget,
+        system: systemWidget, cpu: cpuWidget, memory: memoryWidget, gpu: gpuWidget, workspaces: workspacesWidget, clipboard: clipboardWidget, appImages: appImagesWidget,
         audio: audioWidget, bluetooth: bluetoothWidget, network: networkWidget,
         clock: clockWidget, power: powerWidget, idleInhibitor: idleInhibitorWidget, notifications: notificationsWidget, drives: drivesWidget
     })
