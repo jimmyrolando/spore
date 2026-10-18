@@ -13,6 +13,9 @@ yazi, Zed, Kate and the compositor's borders.
 It ships as a flake: two packages, the shell (with Files) and the greeter,
 and their NixOS and home-manager modules.
 
+> **Spore is my daily driver.** I use it every day and add what I find I'm
+> missing, so it keeps growing: see [what's new](CHANGELOG.md).
+
 https://github.com/user-attachments/assets/29860ee6-0807-400e-bb00-78f9562862b1
 
 <p align="center">
@@ -27,6 +30,15 @@ https://github.com/user-attachments/assets/29860ee6-0807-400e-bb00-78f9562862b1
   <img src="assets/screenshots/printers.webp" width="38%" alt="Settings, on Printers: status, default, queue, test page and adding a network printer">
   <img src="assets/screenshots/appimages.webp" width="22%" alt="The AppImages panel: the newest version of each app in a folder">
 </p>
+
+## What's new
+
+- **AppImages widget:** a list of the AppImages in a folder, newest version of each.
+- **Settings → Printers:** default, queue, test page, and adding a network printer without a driver.
+- **Settings → Displays:** resolution, scale and rotation, with "Keep this change?" and what you keep is remembered.
+- **Hyprland** as well as niri, and an `install.sh` for other distros.
+
+The whole list, by date, is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Why Spore
 
@@ -47,7 +59,7 @@ file manager into a few QML files that reload as you save them, and it
 provides the Wayland, PipeWire, Bluetooth and MPRIS plumbing out of the box.
 Spore is, in the end, a pile of QML on top of it.
 
-This is a first version (0.1.0), tested on NixOS 26.05 with niri 26.04,
+The last tagged version is 0.1.0 and `main` is ahead of it (see [what's new](CHANGELOG.md)). It is tested on NixOS 26.05 with niri 26.04,
 and Quickshell 0.3.1 from nixos-unstable. The manual install was also tried on Arch (Quickshell 0.3.2, Qt 6.12), with niri and with Hyprland 0.56 (in a virtual machine only).
 
 ## Principles
