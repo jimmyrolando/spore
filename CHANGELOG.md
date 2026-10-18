@@ -2,9 +2,11 @@
 
 Spore is my daily driver, and it grows with what I find I'm missing. This is
 what has been added since [v0.1.0](https://github.com/jimmyrolando/spore/releases/tag/v0.1.0),
-newest first. Everything is in `main`; there are no releases in between.
+newest first. A line is added here each time something new reaches `main`.
 
-## October 17–18, 2026
+## v0.2.0, October 18, 2026
+
+### October 17–18
 
 - **AppImages widget** (Settings → Bar, hidden by default). A button that lists
   a folder (`~/Applications`) and shows only the newest version of each app:
@@ -19,7 +21,7 @@ newest first. Everything is in `main`; there are no releases in between.
   theme file that already says the same (it used to reload niri 77 times in a
   row).
 
-## October 15–16, 2026
+### October 15–16
 
 - **Settings → Printers.** The printers CUPS knows: pause or resume, the
   default one, its queue (cancel one job or all), a test page and removing it.
@@ -30,7 +32,7 @@ newest first. Everything is in `main`; there are no releases in between.
   monitor (make, model, serial: not the port) and put back when the shell starts
   or the monitor is plugged in.
 
-## October 12–14, 2026
+### October 12–14
 
 - **Hyprland.** Spore runs on Hyprland as well as niri: the compositor is
   detected and one backend per compositor does the rest (workspaces, windows,
@@ -47,7 +49,7 @@ newest first. Everything is in `main`; there are no releases in between.
 - Fixed a Files crash on Qt 6.12, and the GTK theme is found outside NixOS'
   user profile.
 
-## October 6, 2026
+### October 6 (after v0.1.0)
 
 - **Brightness of each screen** in the Control Center's Home; the sliders stay
   where you leave them.
