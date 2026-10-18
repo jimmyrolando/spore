@@ -59,7 +59,7 @@ file manager into a few QML files that reload as you save them, and it
 provides the Wayland, PipeWire, Bluetooth and MPRIS plumbing out of the box.
 Spore is, in the end, a pile of QML on top of it.
 
-The last tagged version is 0.1.0 and `main` is ahead of it (see [what's new](CHANGELOG.md)). It is tested on NixOS 26.05 with niri 26.04,
+The latest version is 0.2.0 (see [what's new](CHANGELOG.md)). It is tested on NixOS 26.05 with niri 26.04,
 and Quickshell 0.3.1 from nixos-unstable. The manual install was also tried on Arch (Quickshell 0.3.2, Qt 6.12), with niri and with Hyprland 0.56 (in a virtual machine only).
 
 ## Principles
