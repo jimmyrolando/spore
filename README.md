@@ -22,6 +22,11 @@ https://github.com/user-attachments/assets/29860ee6-0807-400e-bb00-78f9562862b1
 <p align="center">
   <img src="assets/screenshots/files.webp" width="98%" alt="Files, with the quick view of a wallpaper">
 </p>
+<p align="center">
+  <img src="assets/screenshots/displays.webp" width="38%" alt="Settings, on Displays: resolution, refresh rate, scale and rotation">
+  <img src="assets/screenshots/printers.webp" width="38%" alt="Settings, on Printers: status, default, queue, test page and adding a network printer">
+  <img src="assets/screenshots/appimages.webp" width="22%" alt="The AppImages panel: the newest version of each app in a folder">
+</p>
 
 ## Why Spore
 
