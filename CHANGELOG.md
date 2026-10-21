@@ -4,6 +4,13 @@ Spore is my daily driver, and it grows with what I find I'm missing. This is
 what has been added since [v0.1.0](https://github.com/jimmyrolando/spore/releases/tag/v0.1.0),
 newest first. A line is added here each time something new reaches `main`.
 
+## Unreleased
+
+### October 21
+
+- **About This Machine shows the right version.** v0.2.0 still said 0.1.0 there;
+  `tools/test.sh` now fails if the version numbers don't match.
+
 ## v0.2.0, October 18, 2026
 
 ### October 17–18

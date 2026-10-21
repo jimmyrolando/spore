@@ -68,6 +68,15 @@ else
     echo "    skipped: node isn't installed"
 fi
 
+# The version lives in three places (shell/common/brand.js is what About
+# shows): a release has to change them together.
+versions=$(
+    sed -n 's/^var version = "\(.*\)"/\1/p' "$repo/shell/common/brand.js"
+    sed -n 's/^  version = "\(.*\)";/\1/p' "$repo/nix/package.nix" "$repo/nix/greeter.nix"
+)
+[ "$(echo "$versions" | wc -l)" = 3 ] && [ "$(echo "$versions" | sort -u | wc -l)" = 1 ] ||
+    bad "brand.js, package.nix and greeter.nix don't have the same version:" $versions
+
 # This checkout's package: its wrapper puts the dependencies in PATH, and with
 # dev-path (below) it runs the checkout's code, not the copy in the store.
 echo "Building the packages…"
