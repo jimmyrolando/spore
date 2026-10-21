@@ -4,7 +4,7 @@ Spore is my daily driver, and it grows with what I find I'm missing. This is
 what has been added since [v0.1.0](https://github.com/jimmyrolando/spore/releases/tag/v0.1.0),
 newest first. A line is added here each time something new reaches `main`.
 
-## Unreleased
+## v0.2.1, October 21, 2026
 
 ### October 21
 

@@ -13,7 +13,7 @@
 
 stdenvNoCC.mkDerivation {
   pname = "spore-greeter";
-  version = "0.2.0";
+  version = "0.2.1";
 
   src = lib.fileset.toSource {
     root = ../.;
