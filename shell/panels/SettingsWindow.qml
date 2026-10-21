@@ -173,6 +173,9 @@ PanelWindow {
                 { key: "lockAfter", label: "Lock screen", hint: "Minutes of inactivity before locking", type: "minutes", step: 1 },
                 { key: "screenOffAfter", label: "Turn off screen", type: "minutes", step: 1 },
                 { key: "suspendAfter", label: "Suspend", hint: "Always locks first", type: "minutes", step: 5 }
+            ]},
+            { title: "Caffeine", rows: [
+                { key: "caffeineScreenOffAfter", label: "Turn off screen", hint: "Never suspends; locks first", type: "minutes", step: 15 }
             ]}
         ]},
         // Its view is built separately (see "About" below).
@@ -253,6 +256,7 @@ PanelWindow {
         case "lockAfter": return settings.lockAfter
         case "screenOffAfter": return settings.screenOffAfter
         case "suspendAfter": return settings.suspendAfter
+        case "caffeineScreenOffAfter": return settings.caffeineScreenOffAfter
         case "style": return settings.barStyle
         case "opacity": return settings.barOpacity
         case "clockFormat": return settings.clockFormat
@@ -298,7 +302,7 @@ PanelWindow {
             return
         }
         switch (key) {
-        case "lockAfter": case "screenOffAfter": case "suspendAfter":
+        case "lockAfter": case "screenOffAfter": case "suspendAfter": case "caffeineScreenOffAfter":
             settings.save({ idle: { [key]: v } })
             break
         case "style": settings.save({ bar: { style: v } }); break
