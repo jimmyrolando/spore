@@ -11,7 +11,10 @@ BarButton {
     readonly property real volume: ready ? sink.audio.volume : 0
     readonly property bool muted: ready ? sink.audio.muted : false
 
-    visible: sink !== null
+    // `shown` and not just visible: with no output, its capsule hides too, if
+    // it's alone in it (see Group in Bar.qml).
+    readonly property bool shown: sink !== null
+    visible: shown
     // Lucide: muted, at 0, low and high.
     icon: muted ? "volume-x" : volume === 0 ? "volume" : volume < 0.5 ? "volume-1" : "volume-2"
     label: Math.round(volume * 100) + "%"

@@ -68,6 +68,15 @@ else
     echo "    skipped: node isn't installed"
 fi
 
+# A bar widget that hides itself says so with `shown`: Group (Bar.qml) hides
+# its capsule only then, and with just `visible` an empty capsule stayed (the
+# Bluetooth one with no adapter).
+for f in "$repo"/shell/bar/*.qml; do
+    case "$f" in */Bar.qml | */BarTooltip.qml) continue ;; esac
+    grep -q "^    visible:" "$f" && ! grep -q "property bool shown" "$f" &&
+        bad "$(basename "$f") hides itself with visible but has no shown: alone in a capsule, it leaves it empty"
+done
+
 # The version lives in three places (shell/common/brand.js is what About
 # shows): a release has to change them together.
 versions=$(

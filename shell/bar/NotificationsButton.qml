@@ -14,7 +14,10 @@ BarButton {
     readonly property int unread: service ? service.unread : 0
     readonly property bool dnd: service !== null && service.dnd
 
-    visible: service !== null
+    // `shown` and not just visible: so its capsule hides with it (see Group in
+    // Bar.qml).
+    readonly property bool shown: service !== null
+    visible: shown
     icon: unread > 0 ? "bell-dot" : "bell"
     dim: dnd
     tooltip: (unread > 0 ? unread + " new" + (count > unread ? " · " + count + " total" : "")

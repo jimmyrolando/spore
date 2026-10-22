@@ -10,6 +10,9 @@ newest first. A line is added here each time something new reaches `main`.
 
 - **The AppImages widget has its own icon** (a package): it looked just like
   the Control Center's on the bar.
+- **No empty capsules on the bar.** Volume, Bluetooth or Notifications alone in
+  a capsule didn't take it with them when they hid (no Bluetooth adapter, no
+  sound output); an empty pill stayed.
 
 ## v0.2.2, October 22, 2026
 
