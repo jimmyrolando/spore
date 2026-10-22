@@ -130,6 +130,7 @@ The view, the order and the hidden files are remembered
 | Ctrl+C, Ctrl+X, Ctrl+V | Copy, cut, paste |
 | F2 | Rename in place (Enter: done; Esc: leave it) |
 | Delete | Move to the Trash (in the Trash: delete for good, it asks) |
+| Shift+Delete | Delete for good without going through the Trash (it asks) |
 | Ctrl+Shift+C | Copy the path (of what's selected, or of the folder) |
 | Ctrl+Shift+N | New folder (it's named right away) |
 | Menu, Shift+F10 | The menu of what's selected |
@@ -175,6 +176,9 @@ when (in the status line). **Restore** puts it back where it was (the folder
 is made again if it's gone; if the name is taken there, it gets a number),
 **Delete for good** (Delete, or the menu) and **Empty Trash** ask first.
 Inside the Trash nothing can be renamed, cut or pasted into.
+
+Outside it, **Delete for good** (Shift+Delete, or the menu) skips the Trash:
+it also asks first, and what it deletes can't be restored.
 
 It's the home Trash (`~/.local/share/Trash`, the freedesktop one Thunar
 and GNOME use too). Things deleted on a USB drive go to that drive's own
