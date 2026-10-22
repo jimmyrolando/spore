@@ -78,6 +78,7 @@ arrow-left
 arrow-right
 search
 layout-grid
+package
 list
 eye
 monitor
