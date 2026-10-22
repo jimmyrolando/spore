@@ -20,7 +20,7 @@ wifi
 clipboard-list
 power
 house
-music
+sixteenth-notes
 volume-2
 cloud-sun
 calendar

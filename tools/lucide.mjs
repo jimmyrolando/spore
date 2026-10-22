@@ -79,7 +79,7 @@ function toPath(el, a) {
             + `h${-(w - 2 * r)}a${r} ${r} 0 0 1 ${-r} ${-r}v${-(h - 2 * r)}a${r} ${r} 0 0 1 ${r} ${-r}z`
     }
     }
-    throw new Error("elemento no soportado: " + el)
+    throw new Error("unsupported element: " + el)
 }
 
 const out = {}
@@ -89,7 +89,7 @@ for (const entry of names) {
     const name = simple ? entry.slice(7) : entry
     const res = await fetch((simple ? simpleBase : base) + name + ".svg")
     if (!res.ok) {
-        console.error(`✗ ${entry}: no existe (${res.status})`)
+        console.error(`✗ ${entry}: not found (${res.status})`)
         process.exitCode = 1
         continue
     }
@@ -98,6 +98,14 @@ for (const entry of names) {
         .map(m => toPath(m[1], attrs(m[2]))).join("")
     if (simple) filled.push(name)
     console.log(`✓ ${name}`)
+}
+
+// An icon that's gone upstream (Lucide renames them: music is now
+// sixteenth-notes) would vanish from the shell without a word: nothing is
+// written until the list is fixed.
+if (process.exitCode) {
+    console.error("lucide.js left as it was: fix the names above in tools/lucide-icons.txt (and where the shell uses them).")
+    process.exit()
 }
 
 const body = Object.keys(out).sort()

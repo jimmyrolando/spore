@@ -352,7 +352,7 @@ ColumnLayout {
                     Icon {
                         anchors.centerIn: parent
                         visible: miniArt.status !== Image.Ready
-                        name: "music"
+                        name: "sixteenth-notes"
                         size: 26
                         color: root.theme.muted2
                     }
