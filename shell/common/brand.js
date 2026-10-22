@@ -8,7 +8,7 @@ var shortName = "Spore"
 var wordmark = "spore"
 var slogan = "From one spore, the whole colony grows."
 var description = "A Quickshell desktop for niri and Hyprland."
-var version = "0.2.1"
+var version = "0.2.2"
 
 // Brand colors (the "Spore Shell brand" sheet): the logo, the wordmark and
 // the SHELL label use them fixed, whatever the theme's palette. Only the soil
