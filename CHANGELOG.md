@@ -4,6 +4,17 @@ Spore is my daily driver, and it grows with what I find I'm missing. This is
 what has been added since [v0.1.0](https://github.com/jimmyrolando/spore/releases/tag/v0.1.0),
 newest first. A line is added here each time something new reaches `main`.
 
+## Unreleased
+
+### October 21
+
+- **Caffeine keeps the machine awake, not the screen.** Nothing suspends while
+  it's on, but after an hour without input the screen locks and turns off
+  anyway (Settings → Idle → Caffeine; `0` keeps it on).
+- **Windows survive a monitor that disconnects when it turns off.** Settings,
+  the Control Center and the rest come back with the monitor (Settings on the
+  same section); before, they vanished and the first click only "closed" them.
+
 ## v0.2.1, October 21, 2026
 
 ### October 21

@@ -18,7 +18,8 @@ Scope {
         idle: {
             lockAfter: 300,
             screenOffAfter: 600,
-            suspendAfter: 1800
+            suspendAfter: 1800,
+            caffeineScreenOffAfter: 3600
         },
         bar: {
             launcher: ["rofi", "-show", "drun"],
@@ -73,6 +74,9 @@ Scope {
     property int lockAfter: defaults.idle.lockAfter
     property int screenOffAfter: defaults.idle.screenOffAfter
     property int suspendAfter: defaults.idle.suspendAfter
+    // With Caffeine on, nothing suspends, but after this the screen locks and
+    // turns off anyway (0 = it stays on).
+    property int caffeineScreenOffAfter: defaults.idle.caffeineScreenOffAfter
     // The NixOS button's command (a list: program and arguments).
     property var launcher: defaults.bar.launcher
     // Qt.formatDateTime format.
@@ -162,7 +166,7 @@ Scope {
     // edited by hand.
     function save(changes: var): void {
         const s = {
-            idle: { lockAfter: lockAfter, screenOffAfter: screenOffAfter, suspendAfter: suspendAfter },
+            idle: { lockAfter: lockAfter, screenOffAfter: screenOffAfter, suspendAfter: suspendAfter, caffeineScreenOffAfter: caffeineScreenOffAfter },
             bar: { launcher: launcher, clockFormat: clockFormat, opacity: barOpacity, style: barStyle, layout: barLayout, widgetOptions: widgetOptions },
             picker: { wallpaperDir: wallpaperDirRaw },
             wallpaper: { transition: wallpaperTransition, videos: videoWallpapers },
@@ -224,6 +228,7 @@ Scope {
         lockAfter = get("idle", "lockAfter")
         screenOffAfter = get("idle", "screenOffAfter")
         suspendAfter = get("idle", "suspendAfter")
+        caffeineScreenOffAfter = get("idle", "caffeineScreenOffAfter")
         launcher = get("bar", "launcher")
         clockFormat = get("bar", "clockFormat")
         barOpacity = Math.max(0, Math.min(1, get("bar", "opacity")))
@@ -246,6 +251,6 @@ Scope {
         fontMonospace = (s.fonts ? get("fonts", "monospace") : typeof oldFont === "string" ? oldFont : "") || defaults.fonts.monospace
         fontBar = get("fonts", "bar") || ""
         console.info("Settings: loaded (idle: lock", lockAfter + "s, screen off", screenOffAfter
-            + "s, suspend", suspendAfter + "s)")
+            + "s, suspend", suspendAfter + "s, caffeine screen off", caffeineScreenOffAfter + "s)")
     }
 }

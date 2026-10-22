@@ -66,6 +66,7 @@ same strip directly.
 | `idle.lockAfter` | `300` | seconds of idle before locking (`0` = never) |
 | `idle.screenOffAfter` | `600` | same, to turn off the monitors |
 | `idle.suspendAfter` | `1800` | same, to suspend |
+| `idle.caffeineScreenOffAfter` | `3600` | with Caffeine on (which never suspends), seconds of idle before locking and turning off the monitors (`0` = they stay on) |
 | `bar.launcher` | `["rofi", "-show", "drun"]` | the `launcher` widget's command |
 | `bar.clockFormat` | `"ddd MMM dd  hh:mm"` | a `Qt.formatDateTime` format; what comes before the first double space is the date (in a muted tone) and what comes after, the time |
 | `bar.style` | `"full"` | the shape: `"full"` (edge to edge), `"floating"` (detached from the edges, with rounded corners) or `"pill"` (a pill) |
@@ -150,7 +151,7 @@ The Control Center opens below the zone of the widget that was clicked
 | `power` | `toggle` |
 | `about` | `toggle` |
 | `lock` | `lock`, `isLocked` |
-| `caffeine` | `toggle`, `enable`, `disable`, `isEnabled` (no locking or suspending on idle) |
+| `caffeine` | `toggle`, `enable`, `disable`, `isEnabled` (no suspending on idle; the screen locks and turns off only after `idle.caffeineScreenOffAfter`) |
 | `wallpaper` | `reload` |
 | `brightness` | `refresh`, `list` (JSON: name and percent per screen), `set <name> <percent>` |
 

@@ -27,7 +27,7 @@ PanelWindow {
     // "dark", "light" or "auto" (theme.mode is the one applied).
     property string modeSetting: "dark"
     property string autoModeHint: ""
-    // Caffeine (the Idle counter says nothing is going to happen).
+    // Caffeine (On / Off next to its group in Idle).
     property bool caffeine: false
 
     signal closeRequested()
@@ -173,6 +173,10 @@ PanelWindow {
                 { key: "lockAfter", label: "Lock screen", hint: "Minutes of inactivity before locking", type: "minutes", step: 1 },
                 { key: "screenOffAfter", label: "Turn off screen", type: "minutes", step: 1 },
                 { key: "suspendAfter", label: "Suspend", hint: "Always locks first", type: "minutes", step: 5 }
+            ]},
+            { title: "Caffeine", caffeineState: true, rows: [
+                { key: "caffeineScreenOffAfter", label: "Turn off screen", hint: "Never suspends; locks first", type: "minutes",
+                  steps: [1, 5, 10, 15, 30, 45, 60, 90, 120, 180, 240] }
             ]}
         ]},
         // Its view is built separately (see "About" below).
@@ -253,6 +257,7 @@ PanelWindow {
         case "lockAfter": return settings.lockAfter
         case "screenOffAfter": return settings.screenOffAfter
         case "suspendAfter": return settings.suspendAfter
+        case "caffeineScreenOffAfter": return settings.caffeineScreenOffAfter
         case "style": return settings.barStyle
         case "opacity": return settings.barOpacity
         case "clockFormat": return settings.clockFormat
@@ -271,9 +276,16 @@ PanelWindow {
         return ""
     }
 
-    // − / + controls: minutes (0 = Never) or percentage (in 10% steps).
+    // − / + controls: minutes (0 = Never) or percentage (in 10% steps). With
+    // `steps` (minutes), the next or previous one on that scale; a value off
+    // the scale (edited by hand) goes to its nearest neighbor.
     function stepValue(row: var, v: real, dir: int): real {
         if (row.type === "percent") return Math.max(0, Math.min(1, Math.round(v * 10 + dir) / 10))
+        if (row.steps) {
+            const scale = [0].concat(row.steps.map(m => m * 60))
+            const next = dir > 0 ? scale.find(s => s > v) : scale.slice().reverse().find(s => s < v)
+            return next ?? v
+        }
         return Math.max(0, Math.min(240 * 60, v + dir * row.step * 60))
     }
 
@@ -298,7 +310,7 @@ PanelWindow {
             return
         }
         switch (key) {
-        case "lockAfter": case "screenOffAfter": case "suspendAfter":
+        case "lockAfter": case "screenOffAfter": case "suspendAfter": case "caffeineScreenOffAfter":
             settings.save({ idle: { [key]: v } })
             break
         case "style": settings.save({ bar: { style: v } }); break
@@ -988,10 +1000,9 @@ PanelWindow {
             onTriggered: counter.now = Date.now()
         }
 
-        text: root.caffeine ? "Caffeine on"
-            : rawMonitor.isIdle && !awareMonitor.isIdle ? "Inhibited by an app"
+        text: rawMonitor.isIdle && !awareMonitor.isIdle ? "Inhibited by an app"
             : "Idle " + (seconds < 60 ? seconds + " s" : Math.floor(seconds / 60) + " min " + seconds % 60 + " s")
-        color: root.caffeine || (rawMonitor.isIdle && !awareMonitor.isIdle) ? root.theme.warn : root.muted
+        color: rawMonitor.isIdle && !awareMonitor.isIdle ? root.theme.warn : root.muted
         font.family: root.theme.fontFamily
         font.pixelSize: 12
     }
@@ -1012,6 +1023,14 @@ PanelWindow {
             Loader {
                 active: groupCard.group.idleCounter === true
                 sourceComponent: IdleCounter {}
+            }
+            // Idle → next to CAFFEINE: whether it's on.
+            Label {
+                visible: groupCard.group.caffeineState === true
+                text: root.caffeine ? "On" : "Off"
+                color: root.caffeine ? root.theme.warn : root.muted
+                font.family: root.theme.fontFamily
+                font.pixelSize: 12
             }
         }
 

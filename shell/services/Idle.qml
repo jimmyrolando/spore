@@ -30,18 +30,24 @@ Scope {
     readonly property int lockAfter: settings.lockAfter
     readonly property int screenOffAfter: settings.screenOffAfter
     readonly property int suspendAfter: settings.suspendAfter
-    // Caffeine (Control Center → Home): while it's on, nothing locks, the
-    // monitors don't turn off and nothing suspends on idle.
+    // Caffeine (Control Center → Home): while it's on, nothing suspends on
+    // idle and the usual lock and screen off don't run. Only after
+    // caffeineScreenOffAfter (an hour by default) does the screen lock and
+    // turn off, so a forgotten Caffeine doesn't leave it on all night while
+    // the machine keeps working.
     property bool inhibited: false
+    readonly property int caffeineScreenOffAfter: settings.caffeineScreenOffAfter
 
     // In a nested test niri (its screen is called "winit") there's never any
     // activity of its own: after suspendAfter seconds it would suspend the whole
     // machine. Nothing is done there.
     readonly property bool active: !(compositor && compositor.nested)
     Component.onCompleted: Qt.callLater(() => console.info("Idle:", active ? "enabled" : "disabled (nested compositor)"))
-    onInhibitedChanged: console.info("Idle:", inhibited ? "caffeine on, nothing happens while idle" : "caffeine off")
+    onInhibitedChanged: console.info("Idle:", inhibited ? "caffeine on, no suspending; screen off after "
+        + (caffeineScreenOffAfter > 0 ? caffeineScreenOffAfter + "s" : "never") : "caffeine off")
 
-    // [seconds] if that action runs, [] if not.
+    // [seconds] if that action runs, [] if not. Lock and suspend don't run
+    // with Caffeine on.
     function timeoutModel(seconds: int): var {
         return active && !inhibited && seconds > 0 ? [seconds] : []
     }
@@ -60,17 +66,35 @@ Scope {
     }
 
     // niri turns the monitors back on by itself, with any key or mouse movement.
+    // With Caffeine, its own time, and it locks first: nobody is watching.
     Variants {
-        model: root.timeoutModel(root.screenOffAfter)
+        model: {
+            const seconds = root.inhibited ? root.caffeineScreenOffAfter : root.screenOffAfter
+            return root.active && seconds > 0 ? [seconds] : []
+        }
         IdleMonitor {
             required property int modelData
             timeout: modelData
             respectInhibitors: true
-            onIsIdleChanged: if (isIdle) {
-                console.info("Idle: turning off monitors after", timeout + "s")
-                if (root.compositor) root.compositor.powerOffMonitors()
+            onIsIdleChanged: {
+                if (!isIdle) return
+                if (root.inhibited) {
+                    console.info("Idle: caffeine on, locking and turning off monitors after", timeout + "s")
+                    root.lock.lock()
+                    screenOffDelay.restart()
+                } else {
+                    console.info("Idle: turning off monitors after", timeout + "s")
+                    if (root.compositor) root.compositor.powerOffMonitors()
+                }
             }
         }
+    }
+
+    // The lockscreen gets drawn before the monitors turn off (like suspendDelay).
+    Timer {
+        id: screenOffDelay
+        interval: 1000
+        onTriggered: if (root.compositor) root.compositor.powerOffMonitors()
     }
 
     // Lock first, even if lockAfter is 0: never wake up without a lock.

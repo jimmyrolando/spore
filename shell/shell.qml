@@ -415,6 +415,13 @@ ShellRoot {
         }
     }
 
+    // Some monitors disconnect when they turn off (idle, Caffeine): with no
+    // outputs left (Qt puts a nameless placeholder screen), the compositor
+    // destroys every window, but their flags stayed "open" and the first
+    // click only closed them. The windows below are loaded only while there's
+    // a monitor: they go away with it and the open ones come back with it.
+    readonly property bool hasOutputs: Quickshell.screens.some(s => s.name !== "")
+
     // --- Settings and the wallpaper strip ------------------------------
     // Only one thing open at a time: "closed", "window" (SettingsWindow) or
     // "strip" (WallpaperStrip). Both are loaded with a LazyLoader only while
@@ -423,7 +430,7 @@ ShellRoot {
     // The strip was opened with "Preview on desktop": closing it goes back to
     // Settings.
     property bool stripFromWindow: false
-    // The section Settings opens on (see the "settings" IpcHandler).
+    // The section Settings opens on (see the "settings" IpcHandler): the last one seen.
     property string settingsSection: "appearance"
 
     function toggleSettings(): void {
@@ -565,7 +572,7 @@ ShellRoot {
     }
 
     LazyLoader {
-        active: root.powerMenuOpen
+        active: root.hasOutputs && root.powerMenuOpen
 
         PowerMenu {
             theme: sessionTheme
@@ -615,7 +622,7 @@ ShellRoot {
     }
 
     LazyLoader {
-        active: root.aboutOpen
+        active: root.hasOutputs && root.aboutOpen
 
         AboutPanel {
             theme: sessionTheme
@@ -759,7 +766,7 @@ ShellRoot {
     }
 
     LazyLoader {
-        active: root.controlCenterOpen
+        active: root.hasOutputs && root.controlCenterOpen
 
         ControlCenter {
             theme: sessionTheme
@@ -808,7 +815,7 @@ ShellRoot {
     }
 
     LazyLoader {
-        active: root.clipboardOpen
+        active: root.hasOutputs && root.clipboardOpen
 
         ClipboardPanel {
             compositor: sessionCompositor
@@ -829,7 +836,7 @@ ShellRoot {
     }
 
     LazyLoader {
-        active: root.appImagesOpen
+        active: root.hasOutputs && root.appImagesOpen
 
         AppImagePanel {
             compositor: sessionCompositor
@@ -874,7 +881,7 @@ ShellRoot {
     }
 
     LazyLoader {
-        active: root.ui === "window"
+        active: root.hasOutputs && root.ui === "window"
 
         SettingsWindow {
             theme: sessionTheme
@@ -890,6 +897,8 @@ ShellRoot {
             autoModeHint: root.autoModeHint
             caffeine: root.caffeine
 
+            // Kept, so it comes back on the same section (hasOutputs, the strip).
+            onActiveSectionChanged: root.settingsSection = activeSection
             onCloseRequested: root.ui = "closed"
             onPreviewRequested: root.openPreview()
             onWallpaperChosen: (path) => root.chooseWallpaper(path)
@@ -922,7 +931,7 @@ ShellRoot {
     }
 
     LazyLoader {
-        active: root.picker !== null
+        active: root.hasOutputs && root.picker !== null
 
         FilePicker {
             theme: sessionTheme
@@ -937,7 +946,7 @@ ShellRoot {
     }
 
     LazyLoader {
-        active: root.ui === "strip"
+        active: root.hasOutputs && root.ui === "strip"
 
         WallpaperStrip {
             theme: sessionTheme

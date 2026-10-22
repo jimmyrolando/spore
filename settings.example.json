@@ -2,7 +2,8 @@
   "idle": {
     "lockAfter": 300,
     "screenOffAfter": 600,
-    "suspendAfter": 1800
+    "suspendAfter": 1800,
+    "caffeineScreenOffAfter": 3600
   },
   "bar": {
     "launcher": [
