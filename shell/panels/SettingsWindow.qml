@@ -175,7 +175,8 @@ PanelWindow {
                 { key: "suspendAfter", label: "Suspend", hint: "Always locks first", type: "minutes", step: 5 }
             ]},
             { title: "Caffeine", rows: [
-                { key: "caffeineScreenOffAfter", label: "Turn off screen", hint: "Never suspends; locks first", type: "minutes", step: 15 }
+                { key: "caffeineScreenOffAfter", label: "Turn off screen", hint: "Never suspends; locks first", type: "minutes",
+                  steps: [1, 5, 10, 15, 30, 45, 60, 90, 120, 180, 240] }
             ]}
         ]},
         // Its view is built separately (see "About" below).
@@ -275,9 +276,16 @@ PanelWindow {
         return ""
     }
 
-    // − / + controls: minutes (0 = Never) or percentage (in 10% steps).
+    // − / + controls: minutes (0 = Never) or percentage (in 10% steps). With
+    // `steps` (minutes), the next or previous one on that scale; a value off
+    // the scale (edited by hand) goes to its nearest neighbor.
     function stepValue(row: var, v: real, dir: int): real {
         if (row.type === "percent") return Math.max(0, Math.min(1, Math.round(v * 10 + dir) / 10))
+        if (row.steps) {
+            const scale = [0].concat(row.steps.map(m => m * 60))
+            const next = dir > 0 ? scale.find(s => s > v) : scale.slice().reverse().find(s => s < v)
+            return next ?? v
+        }
         return Math.max(0, Math.min(240 * 60, v + dir * row.step * 60))
     }
 
