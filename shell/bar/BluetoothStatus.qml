@@ -10,7 +10,10 @@ BarButton {
     readonly property bool enabled: adapter !== null && adapter.enabled
     readonly property var connected: Bluetooth.devices.values.filter(d => d.connected)
 
-    visible: adapter !== null
+    // `shown` and not just visible: with no adapter (a VM), its capsule hides
+    // too, if it's alone in it (see Group in Bar.qml).
+    readonly property bool shown: adapter !== null
+    visible: shown
     icon: "bluetooth"
     dim: !enabled
     // Connected devices with their battery; otherwise, the state.
