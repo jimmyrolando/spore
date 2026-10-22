@@ -242,7 +242,7 @@ PanelWindow {
         id: appImagesWidget
         BarButton {
             theme: bar.theme
-            icon: "layout-grid"
+            icon: "package"
             tooltip: "AppImages"
             onClicked: bar.appImagesRequested()
         }

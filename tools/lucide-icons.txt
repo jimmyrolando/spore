@@ -20,7 +20,7 @@ wifi
 clipboard-list
 power
 house
-music
+sixteenth-notes
 volume-2
 cloud-sun
 calendar
@@ -78,6 +78,7 @@ arrow-left
 arrow-right
 search
 layout-grid
+package
 list
 eye
 monitor

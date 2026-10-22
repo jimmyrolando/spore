@@ -69,7 +69,7 @@ PanelWindow {
     readonly property var pages: [
         // icon: a Lucide name (lucide.js, see Icon.qml).
         { id: "home", label: "Home", icon: "house" },
-        { id: "media", label: "Media", icon: "music" },
+        { id: "media", label: "Media", icon: "sixteenth-notes" },
         { id: "audio", label: "Audio", icon: "volume-2" },
         { id: "system", label: "System", icon: "cpu" },
         { id: "network", label: "Network", icon: "wifi" },

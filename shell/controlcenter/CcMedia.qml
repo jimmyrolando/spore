@@ -46,7 +46,7 @@ ColumnLayout {
 
             Icon {
                 Layout.alignment: Qt.AlignHCenter
-                name: "music"
+                name: "sixteenth-notes"
                 size: 28
                 color: root.theme.muted2
             }
@@ -101,7 +101,7 @@ ColumnLayout {
                     Icon {
                         anchors.centerIn: parent
                         visible: artImage.status !== Image.Ready
-                        name: "music"
+                        name: "sixteenth-notes"
                         size: 56
                         stroke: 1.2
                         color: root.theme.muted2

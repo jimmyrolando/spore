@@ -4,6 +4,13 @@ Spore is my daily driver, and it grows with what I find I'm missing. This is
 what has been added since [v0.1.0](https://github.com/jimmyrolando/spore/releases/tag/v0.1.0),
 newest first. A line is added here each time something new reaches `main`.
 
+## Unreleased
+
+### October 22
+
+- **The AppImages widget has its own icon** (a package): it looked just like
+  the Control Center's on the bar.
+
 ## v0.2.2, October 22, 2026
 
 ### October 21
