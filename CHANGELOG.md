@@ -6,6 +6,16 @@ newest first. A line is added here each time something new reaches `main`.
 
 ## Unreleased
 
+### October 26
+
+- **Files shows its progress in a card.** A copy, a move, a zip or emptying
+  the Trash that takes more than a moment gets a card in the window's corner:
+  the bar, how much is done, about how long is left, what's waiting behind it
+  and Cancel; then, for a few seconds, that it's done or why it stopped. One
+  that ends while Files isn't in front sends a notification. Pasting the same
+  thing again while it's still being copied now says so, instead of quietly
+  waiting and then asking whether to keep both.
+
 ### October 22
 
 - **The AppImages widget has its own icon** (a package): it looked just like
