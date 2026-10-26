@@ -13,6 +13,8 @@ newest first. A line is added here each time something new reaches `main`.
 - **No empty capsules on the bar.** Volume, Bluetooth or Notifications alone in
   a capsule didn't take it with them when they hid (no Bluetooth adapter, no
   sound output); an empty pill stayed.
+- **Files: Shift+Delete deletes for good**, without going through the Trash
+  (also in the right-click menu). It always asks first.
 
 ## v0.2.2, October 22, 2026
 

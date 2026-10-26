@@ -224,7 +224,7 @@ controls. Its windows are regular windows (`FloatingWindow`, app id
   anything else as a text/uri-list). Nothing is overwritten (keep both,
   skip, or Replace, which sends the old one to the Trash first), a copy is
   written under a hidden temporary name and renamed when complete, and
-  deleting is `gio trash`.
+  deleting is `gio trash` (only Shift+Delete, after asking, is `rm`).
   Files doesn't end while a job runs, even with no windows left.
 - `QuickView.qml`: the quick view (Space), a layer-shell panel that never
   takes the keyboard (the arrows stay in the window, and the view follows

@@ -17,10 +17,10 @@ import "../common/session.js" as Session
 // shows it big (the quick view), Backspace or Alt+Up goes up a folder,
 // Alt+Left / Alt+Right go back and forward, typing filters the folder (Esc
 // clears it), Ctrl+A selects everything, Ctrl+C / Ctrl+X / Ctrl+V copy, cut
-// and paste, F2 renames, Delete moves to the Trash, Ctrl+Shift+N makes a
-// folder, Ctrl+L types a path, Ctrl+H shows the hidden files, Ctrl+1 /
-// Ctrl+2 switch between grid and list, Ctrl+N opens another window and
-// Ctrl+W closes this one.
+// and paste, F2 renames, Delete moves to the Trash (Shift+Delete deletes for
+// good, asking first), Ctrl+Shift+N makes a folder, Ctrl+L types a path,
+// Ctrl+H shows the hidden files, Ctrl+1 / Ctrl+2 switch between grid and
+// list, Ctrl+N opens another window and Ctrl+W closes this one.
 FloatingWindow {
     id: root
 
@@ -287,6 +287,18 @@ FloatingWindow {
         }
     }
 
+    // Shift+Delete outside the Trash: for good, without going through it.
+    function askToRemove(): void {
+        const paths = selectedPaths()
+        if (!paths.length || inTrash) return
+        confirmation = {
+            text: "Delete " + (paths.length === 1 ? "“" + Util.baseName(paths[0]) + "”" : items(paths.length)) + " for good?",
+            detail: "It won't go to the Trash. It can't be undone.",
+            action: "remove",
+            names: paths
+        }
+    }
+
     function askToEmpty(): void {
         if (!trashTop || folders.totalCount === 0) return
         confirmation = {
@@ -303,6 +315,7 @@ FloatingWindow {
         focusView()
         if (!asked || value !== "delete") return
         if (asked.action === "purge") ops.purge(root, asked.names)
+        else if (asked.action === "remove") ops.remove(root, asked.names)
         else if (asked.action === "empty") ops.emptyTrash(root)
     }
 
@@ -736,7 +749,7 @@ FloatingWindow {
                 root.flash("Restored " + root.items(names.length) + (where ? " to “" + Util.baseName(where) + "”" : ""), false)
                 return
             }
-            if (kind === "purge" || kind === "empty") {
+            if (kind === "purge" || kind === "remove" || kind === "empty") {
                 root.flash(kind === "empty" ? "The Trash is empty" : "Deleted " + root.items(names.length) + " for good", false)
                 return
             }
@@ -972,7 +985,8 @@ FloatingWindow {
                 { action: "copy", label: "Copy", keys: "Ctrl+C" },
                 { action: "copypath", label: selectedCount > 1 ? "Copy paths" : "Copy path", keys: "Ctrl+Shift+C" },
                 "-",
-                { action: "trash", label: "Move to Trash", keys: "Delete" }
+                { action: "trash", label: "Move to Trash", keys: "Delete" },
+                { action: "remove", label: "Delete for good", keys: "Shift+Delete" }
             ])
         } else if (inRecent) {
             select(-1)
@@ -991,6 +1005,7 @@ FloatingWindow {
                 "-",
                 { action: "rename", label: "Rename", keys: "F2", enabled: one },
                 { action: "trash", label: "Move to Trash", keys: "Delete" },
+                { action: "remove", label: "Delete for good", keys: "Shift+Delete" },
                 "-"
             ].concat(archives ? [{ action: "extract", label: "Extract here" }] : [],
                 canCompress(Object.keys(selection))
@@ -1032,6 +1047,7 @@ FloatingWindow {
         else if (action === "copypath") copyPaths()
         else if (action === "rename") startRename()
         else if (action === "trash") trashSelection()
+        else if (action === "remove") askToRemove()
         else if (action === "newfolder") newFolder()
         else if (action === "terminal") openTerminal(current && current.isDir && selectedCount === 1 ? current.path : folder)
         else if (action === "hidden") hiddenToggled()
@@ -1182,8 +1198,10 @@ FloatingWindow {
         } else if (key === Qt.Key_F2) {
             if (!inTrash) startRename()
         } else if (key === Qt.Key_Delete) {
-            // In the Trash, Delete deletes for good (it asks first).
+            // In the Trash, Delete deletes for good; elsewhere, Shift+Delete does,
+            // without going through it. Both ask first.
             if (inTrash) askToPurge()
+            else if (shift) askToRemove()
             else trashSelection()
         } else if (key === Qt.Key_Backspace && plain) {
             up()

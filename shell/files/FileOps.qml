@@ -18,7 +18,8 @@ import "fileutil.js" as Util
 //   temporary name in the destination and renamed when it's complete: one
 //   that fails or is canceled never leaves a half file with the real name
 //   (only its own temporary is removed).
-// - Deleting is the Trash (gio trash), never rm.
+// - Deleting is the Trash (gio trash). Only Shift+Delete deletes for good
+//   outside it (rm), and the window always asks first.
 //
 // A window that asks for something passes itself as `origin`: questions,
 // errors and results go to it.
@@ -45,10 +46,10 @@ QtObject {
     property var question: null
 
     // Done: what it was ("copy" or "move", a paste or a drop; "rename",
-    // "mkdir", "extract", "compress", "trash", "restore", "purge" or "empty")
-    // and the names it left in `folder`, to select them.
-    // For trash, the paths it took; restore, the paths things went back to;
-    // purge, the names deleted.
+    // "mkdir", "extract", "compress", "trash", "remove", "restore", "purge" or
+    // "empty") and the names it left in `folder`, to select them.
+    // For trash and remove, the paths it took; restore, the paths things went
+    // back to; purge, the names deleted.
     signal finished(var origin, string kind, string folder, var names)
     signal failed(var origin, string message)
 
@@ -134,6 +135,12 @@ QtObject {
         if (paths.length) run({ kind: "trash", origin: origin, paths: paths })
     }
 
+    // Gone for good without going through the Trash (Shift+Delete, asked
+    // first by the window).
+    function remove(origin: var, paths: var): void {
+        if (paths.length) run({ kind: "remove", origin: origin, paths: paths })
+    }
+
     // The Trash, the home one as the freedesktop spec has it: files/ with what
     // was deleted and info/ with where each came from. (Things deleted on
     // another disk go to that disk's own Trash, which isn't shown here.)
@@ -207,6 +214,9 @@ QtObject {
         } else if (job.kind === "trash") {
             status = "Moving " + items + " to the Trash"
             worker.start(["gio", "trash", "--"].concat(job.paths))
+        } else if (job.kind === "remove") {
+            status = "Deleting " + items + " for good"
+            worker.start(["sh", "-c", writableScript + removeScript, "_"].concat(job.paths))
         } else if (job.kind === "restore") {
             status = "Restoring " + (job.names.length === 1 ? "“" + job.names[0] + "”" : job.names.length + " items")
             worker.start(["sh", "-c", freeScript + restoreScript, "_", trashDir].concat(job.names))
@@ -525,6 +535,15 @@ QtObject {
             rm -f -- "\${trash:?}/info/$name.trashinfo"
         done`
 
+    // Arguments: full paths, deleted for good. Never / or a relative path.
+    readonly property string removeScript: `
+        for path in "$@"; do
+            case $path in /?*) ;; *) continue ;; esac
+            name=\${path##*/}
+            writable "$path"
+            rm -rf -- "$path" || { echo "ERROR Couldn't delete “$name”"; exit 1; }
+        done`
+
     // Argument: the Trash. Everything in it, gone for good.
     readonly property string emptyScript: `
         trash=$1
@@ -627,6 +646,9 @@ QtObject {
         } else if (job.kind === "trash") {
             if (exitCode !== 0) failed(job.origin, "Couldn't move it to the Trash" + reason())
             else finished(job.origin, "trash", "", job.paths)
+        } else if (job.kind === "remove") {
+            if (exitCode !== 0) failed(job.origin, (lines.find(l => l.startsWith("ERROR ")) || "ERROR Couldn't delete it" + reason()).slice(6))
+            else finished(job.origin, "remove", "", job.paths)
         } else if (job.kind === "restore") {
             const restored = lines.filter(l => l.startsWith("RESTORED ")).map(l => l.slice(9))
             if (exitCode !== 0) failed(job.origin, (lines.find(l => l.startsWith("ERROR ")) || "ERROR Couldn't restore it" + reason()).slice(6))
