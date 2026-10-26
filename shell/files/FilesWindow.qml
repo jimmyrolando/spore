@@ -50,6 +50,8 @@ FloatingWindow {
     signal closeRequested()
     // It got the focus: the IPC acts on the last one that did.
     signal focused()
+    // It has the focus now.
+    readonly property bool hasFocus: content.windowActive
 
     readonly property string home: Quickshell.env("HOME")
     property string folder: ""
@@ -1740,6 +1742,18 @@ FloatingWindow {
                     font.pixelSize: 11
                 }
             }
+        }
+
+        // A copy, a move or the Trash under way, over the corner (FileOps).
+        JobCard {
+            theme: root.theme
+            ops: root.ops
+            width: Math.min(implicitWidth, parent.width - 32)
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.rightMargin: 16
+            // Above the status line.
+            anchors.bottomMargin: 47
         }
 
         ContextMenu {
