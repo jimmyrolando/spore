@@ -146,6 +146,22 @@ ShellRoot {
         target: fileOps
         function onFinished() { if (fileRecents.loaded) fileRecents.check() }
         function onFailed() { if (fileRecents.loaded) fileRecents.check() }
+        // A long one that ends with no Files window in front (closed, or
+        // you're in another app): a notification says so.
+        function onJobEnded(done, error, seconds) {
+            if (seconds >= 5 && !root.windows.some(w => w.hasFocus)) root.notify(error ? "Files couldn't finish" : "Files", error || done)
+        }
+    }
+
+    // Through the notification daemon's D-Bus (gdbus comes with glib, which
+    // Files has for gio). Each text goes as a GVariant string, quoted, so a
+    // name is never read as something else. (The timeout as "int32 -1": a
+    // bare -1 is taken for an option.)
+    function notify(summary: string, body: string): void {
+        const quote = s => "'" + s.replace(/\\/g, "\\\\").replace(/'/g, "\\'") + "'"
+        Quickshell.execDetached(["gdbus", "call", "--session", "--dest", "org.freedesktop.Notifications",
+            "--object-path", "/org/freedesktop/Notifications", "--method", "org.freedesktop.Notifications.Notify",
+            "'Files'", "0", "'folder'", quote(summary), quote(body), "[]", "{}", "int32 -1"])
     }
 
     property var windows: []

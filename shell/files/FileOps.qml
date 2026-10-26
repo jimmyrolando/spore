@@ -42,6 +42,21 @@ QtObject {
     property string status: ""
     // 0..1 while a copy knows how much there is; -1 otherwise.
     property real progress: -1
+    // In bytes, while it knows (a copy, a zip, an archive being extracted):
+    // how much there is and how much is done; and about how many seconds
+    // are left (-1: not known yet).
+    property real totalBytes: 0
+    property real doneBytes: 0
+    property real secondsLeft: -1
+    // Waiting their turn behind the current one.
+    readonly property int waiting: queue.length
+    // The one under way: what its icon shows ("copy", "move", "archive",
+    // "restore" or "trash"), and whether Cancel stops it.
+    readonly property string what: !current ? ""
+        : current.kind === "transfer" ? current.mode
+        : current.kind === "extract" || current.kind === "compress" ? "archive"
+        : current.kind === "restore" ? "restore" : "trash"
+    readonly property bool cancelable: current !== null && ["transfer", "extract", "compress"].includes(current.kind)
     // A paste waiting for an answer: { origin, text, count }.
     property var question: null
 
@@ -52,6 +67,15 @@ QtObject {
     // back to; purge, the names deleted.
     signal finished(var origin, string kind, string folder, var names)
     signal failed(var origin, string message)
+    // Every job that had a status line, when it's over: what it did, in the
+    // past ("Copied “Big” to “Work”"), its error ("" if it went well), and
+    // how long it took.
+    signal jobEnded(string done, string error, real seconds)
+
+    // The error of the job that's ending, for jobEnded (a paste refused
+    // before it starts fails too, while another job is under way).
+    property bool ending: false
+    onFailed: (origin, message) => { if (ending) current.error = message }
 
     property var current: null
     property var queue: []
@@ -89,6 +113,15 @@ QtObject {
     // drag and drop goes straight here, leaving the clipboard alone.
     // fromClipboard: a cut whose question is canceled goes back to it.
     function transfer(origin: var, mode: string, paths: var, folder: string, fromClipboard: bool): bool {
+        // The same paste again while the first is still on: it would only
+        // wait, and then ask whether to keep both.
+        const same = j => j && (j.kind === "check" || j.kind === "transfer") && j.mode === mode && j.folder === folder
+            && j.paths.length === paths.length && j.paths.every((p, i) => p === paths[i])
+        if (same(current) || queue.some(same) || (question && same(question.job))) {
+            failed(origin, (mode === "move" ? "Already moving " : "Already copying ")
+                + (paths.length === 1 ? "“" + baseName(paths[0]) + "”" : "those " + paths.length + " items") + " there")
+            return false
+        }
         for (const path of paths) {
             if (folder === path || folder.startsWith(path + "/")) {
                 failed(origin, "Can't " + (mode === "move" ? "move" : "copy") + " a folder into itself")
@@ -176,15 +209,19 @@ QtObject {
     }
 
     function next(): void {
+        totalBytes = 0
+        doneBytes = 0
+        secondsLeft = -1
         if (queue.length === 0) {
             current = null
             status = ""
             progress = -1
             return
         }
-        current = queue[0]
+        const job = queue[0]
         queue = queue.slice(1)
-        const job = current
+        job.started = Date.now()
+        current = job
         const count = job.paths ? job.paths.length : 1
         const items = count === 1 ? "“" + (job.paths ? baseName(job.paths[0]) : "") + "”" : count + " items"
         const where = "“" + baseName(job.folder || "") + "”"
@@ -602,15 +639,40 @@ QtObject {
         const space = line.indexOf(" ")
         const word = line.slice(0, space)
         const rest = line.slice(space + 1)
-        if (word === "TOTAL") job.total = Number(rest)
+        if (word === "TOTAL") totalBytes = job.total = Number(rest)
         // Copied, or read by bsdtar (the archive, or what goes in the zip).
-        else if ((word === "COPIED" || word === "READ") && job.total > 0) progress = Math.min(1, Number(rest) / job.total)
+        else if ((word === "COPIED" || word === "READ") && job.total > 0) {
+            doneBytes = Math.min(job.total, Number(rest) || 0)
+            progress = doneBytes / job.total
+            estimate(job)
+        }
         else if (word === "PLACED" && job.kind === "transfer") job.placed.push(rest)
+    }
+
+    // Seconds left, at the pace since the first bytes (not since the start:
+    // du counting a big folder takes a while), once there are 2 s of it.
+    function estimate(job: var): void {
+        const now = Date.now()
+        if (!job.from) job.from = { at: now, bytes: doneBytes }
+        const seconds = (now - job.from.at) / 1000
+        const rate = seconds > 0 ? (doneBytes - job.from.bytes) / seconds : 0
+        secondsLeft = seconds >= 2 && rate > 0 ? (totalBytes - doneBytes) / rate : -1
+    }
+
+    // "Copying “Big” to “Work”" -> "Copied “Big” to “Work”".
+    function past(text: string): string {
+        const verbs = { Copying: "Copied", Moving: "Moved", Extracting: "Extracted", Compressing: "Compressed",
+            Deleting: "Deleted", Restoring: "Restored", Emptying: "Emptied" }
+        const space = text.indexOf(" ")
+        const verb = verbs[text.slice(0, space)]
+        return verb ? verb + text.slice(space) : text
     }
 
     function ended(exitCode: int): void {
         const job = current
         if (!job) return
+        const said = status
+        ending = true
         const lines = worker.output.trim().split("\n").filter(l => l)
         if (job.kind === "check") {
             // Names already there: ask what to do (the transfer waits); none: go.
@@ -660,6 +722,8 @@ QtObject {
             if (exitCode !== 0) failed(job.origin, "Couldn't empty the Trash" + reason())
             else finished(job.origin, "empty", "", [])
         }
+        ending = false
+        if (said) jobEnded(past(said), job.error || "", (Date.now() - job.started) / 1000)
         next()
     }
 
