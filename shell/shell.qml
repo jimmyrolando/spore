@@ -681,6 +681,11 @@ ShellRoot {
         }
     }
 
+    // Spore's services (spored): "Show in folder" opens Files.
+    Spored {
+        enabled: !sessionCompositor.nested
+    }
+
     // Bluetooth pairing with an agent (the Control Center's Bluetooth page).
     BluetoothAgent {
         id: bluetoothPairing

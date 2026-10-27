@@ -77,14 +77,14 @@ for f in "$repo"/shell/bar/*.qml; do
         bad "$(basename "$f") hides itself with visible but has no shown: alone in a capsule, it leaves it empty"
 done
 
-# The version lives in three places (shell/common/brand.js is what About
+# The version lives in four places (shell/common/brand.js is what About
 # shows): a release has to change them together.
 versions=$(
     sed -n 's/^var version = "\(.*\)"/\1/p' "$repo/shell/common/brand.js"
-    sed -n 's/^  version = "\(.*\)";/\1/p' "$repo/nix/package.nix" "$repo/nix/greeter.nix"
+    sed -n 's/^  version = "\(.*\)";/\1/p' "$repo/nix/package.nix" "$repo/nix/greeter.nix" "$repo/nix/spored.nix"
 )
-[ "$(echo "$versions" | wc -l)" = 3 ] && [ "$(echo "$versions" | sort -u | wc -l)" = 1 ] ||
-    bad "brand.js, package.nix and greeter.nix don't have the same version:" $versions
+[ "$(echo "$versions" | wc -l)" = 4 ] && [ "$(echo "$versions" | sort -u | wc -l)" = 1 ] ||
+    bad "brand.js, package.nix, greeter.nix and spored.nix don't have the same version:" $versions
 
 # This checkout's package: its wrapper puts the dependencies in PATH, and with
 # dev-path (below) it runs the checkout's code, not the copy in the store.

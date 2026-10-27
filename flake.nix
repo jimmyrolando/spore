@@ -18,6 +18,8 @@
         spore-shell = pkgs.callPackage ./nix/package.nix { };
         # The greeter for greetd, on its own.
         spore-greeter = pkgs.callPackage ./nix/greeter.nix { };
+        # Spore's services (spore-shell has it in its bin).
+        spored = spore-shell.spored;
         default = spore-shell;
       });
 

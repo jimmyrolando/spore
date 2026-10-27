@@ -40,9 +40,23 @@ for script in spore spore-ipc spore-files; do
       -e "s|@share@|$share|g" \
       -e "s|@quickshell@|$qs_prefix|g" \
       -e "s|@pciIds@|$pci_ids|g" \
+      -e "s|@bin@|$bin|g" \
       "$repo/nix/bin/$script" > "$bin/$script"
   chmod +x "$bin/$script"
 done
+
+# Spore's services (spored/), compiled here if Go is installed. Without it
+# Spore works the same, minus what spored offers (a browser's "Show in
+# folder" opens another file manager, or none).
+if command -v go >/dev/null 2>&1; then
+  if (cd "$repo/spored" && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o "$bin/spored" .); then
+    echo "spored built in $bin."
+  else
+    echo "Note: spored didn't build; Spore works without it."
+  fi
+else
+  echo "Note: Go isn't installed, so spored wasn't built (\"Show in folder\" won't open Spore Files)."
+fi
 sed "s|@bin@|$bin|" "$repo/nix/spore-files.desktop" > "$apps/spore-files.desktop"
 
 # The official wallpapers for the grid in Settings, only if the user has no

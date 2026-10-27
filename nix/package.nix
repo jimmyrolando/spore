@@ -21,6 +21,7 @@
   ddcutil,
   hwdata,
   kdePackages,
+  callPackage,
 }:
 
 let
@@ -53,6 +54,8 @@ let
     # Files: pdftoppm and pdfinfo draw a PDF's pages in the quick view.
     poppler-utils
   ];
+  # Spore's services, in Go (spored.nix).
+  spored = callPackage ./spored.nix { };
 in
 stdenvNoCC.mkDerivation {
   pname = "spore-shell";
@@ -90,9 +93,12 @@ stdenvNoCC.mkDerivation {
         --subst-var-by quickshell "${quickshell}" \
         --subst-var-by pciIds "${hwdata}/share/hwdata/pci.ids" \
         --subst-var-by qtmultimedia "${qt6.qtmultimedia}" \
-        --subst-var-by imagePlugins "${imagePlugins}"
+        --subst-var-by imagePlugins "${imagePlugins}" \
+        --subst-var-by bin "$out/bin"
       chmod +x $out/bin/$script
     done
+
+    ln -s ${spored}/bin/spored $out/bin/spored
 
     # Files in the app launchers (rofi -show drun…).
     install -Dm644 nix/spore-files.desktop $out/share/applications/spore-files.desktop
@@ -100,6 +106,8 @@ stdenvNoCC.mkDerivation {
 
     runHook postInstall
   '';
+
+  passthru = { inherit spored; };
 
   meta = {
     description = "Spore Shell: a Quickshell desktop for niri on NixOS, with its file manager";

@@ -49,4 +49,7 @@ export QT_PLUGIN_PATH="@qtmultimedia@/lib/qt-6/plugins:@imagePlugins@${QT_PLUGIN
 export SPORE_QUICKSHELL="@quickshell@/bin/quickshell"
 # PCI device names (the GPU in About, AboutPanel.qml).
 export SPORE_PCI_IDS="@pciIds@"
+# Spore's services (spored/, started by shell/services/Spored.qml): the
+# package's, also in dev mode, since it's compiled.
+export SPORE_SPORED="@bin@/spored"
 exec @quickshell@/bin/quickshell --path "$root/shell" "$@"
