@@ -8,6 +8,10 @@ newest first. A line is added here each time something new reaches `main`.
 
 ### October 27
 
+- **The quick view steps aside when Files asks something.** It's above every
+  window, so a question (deleting for good, a name that's taken when pasting),
+  Open With or the menu could open under it, unseen. It hides while they're
+  open, and comes back after.
 - **Deleting keeps your place.** After sending files to the Trash (or deleting
   them for good), the selection goes to the next one, or the one before if it
   was the last. With the quick view open, it goes on showing that one: going
