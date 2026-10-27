@@ -440,10 +440,10 @@ FloatingWindow {
     // follows it. It closes with nothing selected and when this window loses
     // the focus (another app, the file opened with its app).
     property bool quickView: false
-    // Something the window asks or offers (a question, Open With, its menu):
-    // the quick view, above every window, steps aside meanwhile.
-    readonly property bool asking: confirmation !== null || openWithEntry !== null || contextMenu.visible
-        || (ops.question !== null && ops.question.origin === root)
+    // Something the window offers (Open With, its menu): the quick view,
+    // above every window, steps aside meanwhile. Its questions show on the
+    // view instead (see `question` there).
+    readonly property bool asking: openWithEntry !== null || contextMenu.visible
     readonly property string previewKind: quickViewLoader.item ? quickViewLoader.item.kind : ""
     readonly property bool previewPlaying: quickViewLoader.item ? quickViewLoader.item.mediaReady : false
     // A PDF's page in the quick view: "3/12" ("" for anything else).
@@ -482,8 +482,9 @@ FloatingWindow {
             screen: root.screen
             entry: root.previewEntry
             ops: root.ops
-            // Above every window, it would hide what the window asks.
+            // Above every window, it would hide what the window offers.
             stepAside: root.asking
+            question: pasteAsk.visible ? pasteAsk : confirmAsk.visible ? confirmAsk : null
             // Of what it shows (the selection, once its file is ready).
             thumbnail: thumbs.thumbnailFor(preview.shownPath)
             timeFormat: root.timeFormat
@@ -1792,8 +1793,12 @@ FloatingWindow {
 
         // A paste that finds names already there asks what to do (FileOps).
         AskDialog {
+            id: pasteAsk
             theme: root.theme
             anchors.fill: parent
+            // With the quick view open, it shows there (this one, unseen, still
+            // takes the keyboard).
+            opacity: root.quickView ? 0 : 1
             visible: root.ops.question !== null && root.ops.question.origin === root
             text: visible ? root.ops.question.text : ""
             detail: "Keep both adds a number to the new ones; Replace moves the old ones to the Trash."
@@ -1811,8 +1816,10 @@ FloatingWindow {
 
         // Deleting for good (the Trash): Enter deletes, Esc cancels.
         AskDialog {
+            id: confirmAsk
             theme: root.theme
             anchors.fill: parent
+            opacity: root.quickView ? 0 : 1
             visible: root.confirmation !== null
             text: visible ? root.confirmation.text : ""
             detail: visible ? root.confirmation.detail : ""
