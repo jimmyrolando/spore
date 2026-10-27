@@ -34,12 +34,19 @@ PanelWindow {
     // see Thumbnails.qml).
     property string thumbnail: ""
     property string timeFormat: "hh:mm"
-    // Hidden for a moment (the Files window asks something, which would be
-    // under it): a video or a song stops, and starts again after.
+    // Hidden for a moment (the Files window offers something, which would be
+    // under it: Open With, its menu).
     property bool stepAside: false
     visible: !stepAside
-    onStepAsideChanged: {
-        if (stepAside) stopMedia()
+    // A question of the window's (one of its AskDialogs), shown on the card
+    // while the view is open: deleting the file shown for good, a paste's
+    // names. The keyboard answers it in the window, as always.
+    property var question: null
+    // A video or a song (drawn by a process of its own, over the card) stops
+    // meanwhile, and starts again after.
+    readonly property bool paused: stepAside || question !== null
+    onPausedChanged: {
+        if (paused) stopMedia()
         else if (kind === "video" || kind === "audio") startSoon.restart()
     }
     signal openRequested()
@@ -1088,6 +1095,17 @@ PanelWindow {
                     }
                 }
             }
+        }
+
+        AskDialog {
+            theme: root.theme
+            anchors.fill: parent
+            radius: card.radius
+            visible: root.question !== null
+            text: visible ? root.question.text : ""
+            detail: visible ? root.question.detail : ""
+            buttons: visible ? root.question.buttons : []
+            onAnswered: (value) => root.question.answered(value)
         }
     }
 
