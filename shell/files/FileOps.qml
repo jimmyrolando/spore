@@ -180,8 +180,8 @@ QtObject {
     readonly property string trashDir: (Quickshell.env("XDG_DATA_HOME") || Quickshell.env("HOME") + "/.local/share") + "/Trash"
     readonly property string trashFiles: trashDir + "/files"
 
-    // It may not exist yet (nothing ever deleted): the Trash place needs it.
-    Component.onCompleted: Quickshell.execDetached(["mkdir", "-p", trashFiles, trashDir + "/info"])
+    // It may not exist yet (nothing ever deleted): the Trash place needs it
+    // (made in Component.onCompleted, below).
 
     // Back where they came from: `names` are in the Trash's files/.
     function restore(origin: var, names: var): void {
@@ -200,7 +200,8 @@ QtObject {
     // Stops a copy or a move: what's done stays done, the item in progress is
     // undone (a copy's temporary is removed; a move within a disk is instant).
     function cancel(): void {
-        if (worker.running) worker.signal(15)
+        if (current && current.engine) engine.send({ op: "cancel", id: current.engineId })
+        else if (worker.running) worker.signal(15)
     }
 
     function run(job: var): void {
@@ -212,7 +213,9 @@ QtObject {
         totalBytes = 0
         doneBytes = 0
         secondsLeft = -1
-        if (queue.length === 0) {
+        // Nothing to do, or spored is still saying hello (it goes on from
+        // there, engineSaid).
+        if (queue.length === 0 || engine.state === "starting") {
             current = null
             status = ""
             progress = -1
@@ -228,18 +231,21 @@ QtObject {
         progress = -1
         if (job.kind === "check") {
             status = ""
-            worker.start(["sh", "-c", checkScript, "_", job.folder].concat(job.paths))
+            start(job, { op: "check", sources: job.paths, dest: job.folder },
+                ["sh", "-c", checkScript, "_", job.folder].concat(job.paths))
         } else if (job.kind === "transfer") {
             status = (job.mode === "move" ? "Moving " : "Copying ") + items + " to " + where
             job.total = 0
             job.placed = []
-            worker.start(["sh", "-c", freeScript + transferScript, "_", job.mode, job.folder, job.policy].concat(job.paths))
+            start(job, { op: job.mode, sources: job.paths, dest: job.folder, policy: job.policy },
+                ["sh", "-c", freeScript + transferScript, "_", job.mode, job.folder, job.policy].concat(job.paths))
         } else if (job.kind === "rename") {
             status = ""
-            worker.start(["sh", "-c", renameScript, "_", job.path, job.name])
+            start(job, { op: "rename", path: job.path, name: job.name },
+                ["sh", "-c", renameScript, "_", job.path, job.name])
         } else if (job.kind === "mkdir") {
             status = ""
-            worker.start(["sh", "-c", mkdirScript, "_", job.folder])
+            start(job, { op: "mkdir", dest: job.folder }, ["sh", "-c", mkdirScript, "_", job.folder])
         } else if (job.kind === "extract") {
             status = "Extracting “" + baseName(job.path) + "”"
             worker.start(["sh", "-c", freeScript + extractScript, "_", job.path, job.folder, job.base])
@@ -253,7 +259,7 @@ QtObject {
             worker.start(["gio", "trash", "--"].concat(job.paths))
         } else if (job.kind === "remove") {
             status = "Deleting " + items + " for good"
-            worker.start(["sh", "-c", writableScript + removeScript, "_"].concat(job.paths))
+            start(job, { op: "remove", paths: job.paths }, ["sh", "-c", writableScript + removeScript, "_"].concat(job.paths))
         } else if (job.kind === "restore") {
             status = "Restoring " + (job.names.length === 1 ? "“" + job.names[0] + "”" : job.names.length + " items")
             worker.start(["sh", "-c", freeScript + restoreScript, "_", trashDir].concat(job.names))
@@ -263,6 +269,17 @@ QtObject {
         } else if (job.kind === "empty") {
             status = "Emptying the Trash"
             worker.start(["sh", "-c", writableScript + emptyScript, "_", trashDir])
+        }
+    }
+
+    // By spored (the request) if it's there, else by the script (args).
+    function start(job: var, request: var, args: var): void {
+        if (engine.state === "ready") {
+            job.engine = true
+            job.engineId = ++engine.lastId
+            engine.send(Object.assign({ id: job.engineId }, request))
+        } else {
+            worker.start(args)
         }
     }
 
@@ -619,6 +636,110 @@ QtObject {
         onRunningChanged: if (!running && !began) Qt.callLater(root.couldntStart)
     }
 
+    // spored's engine for Files (spored/files.go in the repo): copies, moves,
+    // the check before a paste, renames, new folders and deleting for good,
+    // with JSON lines on its stdin and stdout. It's the one in Spore's
+    // package (SPORE_SPORED), and goes when Files does (its stdin closes).
+    // Without it (installed with no Go) or if it speaks another protocol (dev
+    // mode: this QML from the checkout, spored from the package), the scripts
+    // above do everything, as they did before spored.
+    readonly property int engineProtocol: 1
+
+    property Process engine: Process {
+        // "starting" (waiting for its hello), "ready" or "off".
+        property string state: "off"
+        property int lastId: 0
+        property bool began: false
+
+        function send(message: var): void {
+            write(JSON.stringify(message) + "\n")
+        }
+
+        command: [Quickshell.env("SPORE_SPORED") || "", "files"]
+        stdinEnabled: true
+        stdout: SplitParser {
+            onRead: (line) => root.engineSaid(line)
+        }
+        stderr: SplitParser {
+            onRead: (line) => console.warn("spored:", line)
+        }
+        onStarted: began = true
+        onExited: root.engineGone()
+        onRunningChanged: if (!running && !began) Qt.callLater(root.engineGone)
+    }
+
+    // A hello that doesn't come: the scripts.
+    property Timer engineHello: Timer {
+        interval: 3000
+        onTriggered: if (root.engine.state === "starting") root.engineGone()
+    }
+
+    Component.onCompleted: {
+        Quickshell.execDetached(["mkdir", "-p", trashFiles, trashDir + "/info"])
+        if (Quickshell.env("SPORE_SPORED")) {
+            engine.state = "starting"
+            engine.running = true
+            engineHello.start()
+        }
+    }
+
+    function engineSaid(line: string): void {
+        let message
+        try {
+            message = JSON.parse(line)
+        } catch (e) {
+            return
+        }
+        if (message.hello !== undefined) {
+            if (message.protocol === engineProtocol) {
+                engine.state = "ready"
+            } else {
+                console.warn("spored speaks protocol " + message.protocol + ", Files " + engineProtocol + ": using the scripts")
+                engine.state = "off"
+                engine.running = false
+            }
+            if (!current) next()
+            return
+        }
+        const job = current
+        if (!job || !job.engine || message.id !== job.engineId) return
+        if (message.event === "total") {
+            totalBytes = job.total = message.bytes || 0
+        } else if (message.event === "progress") {
+            if (job.total > 0) {
+                doneBytes = Math.min(job.total, message.bytes || 0)
+                progress = doneBytes / job.total
+                estimate(job)
+            }
+        } else if (message.event === "done") {
+            // As the scripts would have said it (see finish).
+            const names = message.names || []
+            const error = message.error ? ["ERROR " + message.error] : []
+            job.why = message.reason || ""
+            if (job.kind === "transfer") job.placed = names
+            const exitCode = message.canceled ? 130 : message.error ? 1 : 0
+            const lines = job.kind === "check" || job.kind === "mkdir" ? names
+                : job.kind === "rename" && message.code === "exists" ? ["EXISTS"] : error
+            finish(exitCode, lines)
+        }
+    }
+
+    // spored ended, or never started: the scripts from now on. A job it had
+    // fails (what's done stays done; a copy's temporary is its own to clean).
+    function engineGone(): void {
+        if (engine.state === "off") return
+        const waiting = engine.state === "starting"
+        engine.state = "off"
+        // (An older spored, without `files`, doesn't say hello: it's stopped.)
+        engine.running = false
+        if (current && current.engine) {
+            console.warn("spored stopped in the middle of a job")
+            finish(1, ["ERROR Something went wrong"])
+        } else if (waiting && !current) {
+            next()
+        }
+    }
+
     // The job's run couldn't start. With tens of thousands of paths, that's
     // the system's limit on arguments (2 MB with the usual 8 MB stack). It
     // fails, and the queue goes on: it used to wait for an end that never
@@ -669,11 +790,16 @@ QtObject {
     }
 
     function ended(exitCode: int): void {
+        finish(exitCode, worker.output.trim().split("\n").filter(l => l))
+    }
+
+    // A job's end, by its exit code and the lines it printed (a script's, or
+    // spored's answer put the same way).
+    function finish(exitCode: int, lines: var): void {
         const job = current
         if (!job) return
         const said = status
         ending = true
-        const lines = worker.output.trim().split("\n").filter(l => l)
         if (job.kind === "check") {
             // Names already there: ask what to do (the transfer waits); none: go.
             const transfer = Object.assign({}, job, { kind: "transfer", policy: "keep" })
@@ -727,8 +853,10 @@ QtObject {
         next()
     }
 
-    // The tool's own message, briefly ("Permission denied").
+    // The tool's own message, briefly ("Permission denied"): spored's, or
+    // the last line a script's tools wrote.
     function reason(): string {
+        if (current && current.engine) return current.why ? ": " + current.why : ""
         const line = worker.errors.trim().split("\n").pop() || ""
         const why = line.slice(line.lastIndexOf(": ") + 2)
         return why ? ": " + why.charAt(0).toLowerCase() + why.slice(1) : ""

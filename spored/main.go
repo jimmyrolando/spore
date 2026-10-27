@@ -2,8 +2,9 @@
 // own, in one small program. The shell starts it with the session
 // (shell/services/Spored.qml) and starts it again if it ends.
 //
-// For now it offers one: org.freedesktop.FileManager1 (filemanager.go), so a
-// browser's "Show in folder" opens Spore Files.
+// It offers org.freedesktop.FileManager1 (filemanager.go), so a browser's
+// "Show in folder" opens Spore Files. `spored files` is something else: the
+// engine of Files' operations, which Files starts as its child (files.go).
 package main
 
 import (
@@ -19,6 +20,11 @@ import (
 func main() {
 	log.SetFlags(0)
 	log.SetPrefix("spored: ")
+	// `spored files`: Files' engine, on stdin and stdout (files.go).
+	if len(os.Args) > 1 && os.Args[1] == "files" {
+		filesMain()
+		return
+	}
 	files := flag.String("files", "", "the spore-files command (default: from PATH)")
 	flag.Parse()
 

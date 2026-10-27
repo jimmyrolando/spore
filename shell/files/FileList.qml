@@ -247,6 +247,7 @@ ListView {
                 theme: root.theme
                 name: row.fileName
                 isDir: row.fileIsDir
+                rowItem: row
                 onAccepted: (name) => root.renamed(name)
                 onCanceled: root.renameCanceled()
             }

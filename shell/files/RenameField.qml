@@ -12,6 +12,8 @@ Rectangle {
     property bool isDir: false
     // Centered (the grid) or from the left (the list).
     property bool centered: false
+    // The view's row it's in (see onActiveFocusChanged).
+    property Item rowItem: null
     signal accepted(string name)
     signal canceled()
 
@@ -53,6 +55,14 @@ Rectangle {
         Keys.onReturnPressed: root.finish(true)
         Keys.onEnterPressed: root.finish(true)
         Keys.onEscapePressed: root.finish(false)
-        onActiveFocusChanged: if (!activeFocus) root.finish(true)
+        onActiveFocusChanged: {
+            if (activeFocus) return
+            // The row it's in took the keyboard: the view gives it to its
+            // current row when the selection lands there, which can come
+            // just after the field showed up (spored makes a new folder
+            // before the listing has it). That's not a click elsewhere.
+            if (root.rowItem && Window.activeFocusItem === root.rowItem) forceActiveFocus()
+            else root.finish(true)
+        }
     }
 }

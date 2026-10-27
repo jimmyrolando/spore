@@ -21,17 +21,28 @@ in one small Go program with no runtime dependencies.
   name and doesn't let it be taken: whoever asks first keeps it. spored asks
   at login, before anything starts Thunar; if Thunar already has it, spored
   waits in the queue.
+- `spored files` (files.go, fileops.go): the engine of Files' operations.
+  Files starts it as its child and they talk in JSON lines on its stdin and
+  stdout (the protocol is at the top of files.go); it ends when Files does.
+  It copies, moves, checks what a paste would collide with, renames, makes
+  folders and deletes for good: progress by the bytes really copied (the
+  kernel's `copy_file_range`), renames that never replace (`renameat2` with
+  `RENAME_NOREPLACE`), a move to another disk with its progress, cancel
+  as a message, and no quoting or argument-length limits. The queue and the
+  questions stay in `shell/files/FileOps.qml`.
+
+  It says hello with a protocol number first. Without spored, or with
+  another protocol (dev mode: the QML from the checkout, spored from the
+  package), FileOps does everything with its old scripts. They go once
+  releases ship spored built.
 
 ## Next candidates
 
-1. The engine of Files' operations (`shell/files/FileOps.qml`): copies with
-   exact progress, no-overwrite renames from the kernel (`renameat2`), no
-   quoting or argument-length limits.
+1. The Trash (send, restore, purge, empty), following the freedesktop spec,
+   other disks' Trash folders included. Today `gio trash` and scripts.
 2. Anything else that today is a script watching a D-Bus monitor.
 
-Talking to the shell, when a service needs it: JSON lines over a Unix
-socket (Quickshell.Io's `Socket`), with a protocol version, since in dev
-mode the QML comes from the checkout and spored from the package.
+Compressing and extracting stay with bsdtar: Go reads neither 7z nor rar.
 
 ## Building
 

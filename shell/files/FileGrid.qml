@@ -130,6 +130,7 @@ GridView {
                 theme: root.theme
                 name: entry.fileName
                 isDir: entry.fileIsDir
+                rowItem: entry
                 centered: true
                 onAccepted: (name) => root.renamed(name)
                 onCanceled: root.renameCanceled()

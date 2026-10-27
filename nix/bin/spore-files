@@ -56,5 +56,8 @@ export QT_PLUGIN_PATH="@qtmultimedia@/lib/qt-6/plugins:@imagePlugins@${QT_PLUGIN
 export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 # The app id niri, the launchers and the bar see (spore-files.desktop).
 export QS_APP_ID=spore-files
+# spored's engine for copies and moves (FileOps.qml), if it was built: the
+# package's, also in dev mode, since it's compiled.
+[ -x "@bin@/spored" ] && export SPORE_SPORED="@bin@/spored"
 export SPORE_FILES_OPEN="$target"
 exec "$qs" -n -p "$entry"
