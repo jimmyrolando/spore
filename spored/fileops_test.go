@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -236,7 +237,7 @@ func TestProtocol(t *testing.T) {
 		}
 	}
 
-	if !strings.Contains(lines[0], `"protocol":1`) {
+	if !strings.Contains(lines[0], `"protocol":2`) {
 		t.Errorf("hello: %s", lines[0])
 	}
 	var last event
@@ -277,5 +278,69 @@ func TestMoveAcrossDisks(t *testing.T) {
 	}
 	if exists(filepath.Join(src, "a")) || read(t, filepath.Join(dest, "a", "f")) != "12345" {
 		t.Error("not moved")
+	}
+}
+
+// Everything inside, all the way down: a hard link weighs once, a link to a
+// folder isn't followed, an unreadable folder is noted.
+func TestCountFolder(t *testing.T) {
+	root := t.TempDir()
+	write(t, filepath.Join(root, "a"), "12345")
+	write(t, filepath.Join(root, "sub", "b"), "123")
+	write(t, filepath.Join(root, "sub", "deeper", "c"), "1")
+	os.Link(filepath.Join(root, "a"), filepath.Join(root, "sub", "a-again"))
+	os.Symlink(filepath.Join(root, "sub"), filepath.Join(root, "link"))
+	os.Mkdir(filepath.Join(root, "locked"), 0o755)
+	write(t, filepath.Join(root, "locked", "hidden"), "123456789")
+	os.Chmod(filepath.Join(root, "locked"), 0)
+	defer os.Chmod(filepath.Join(root, "locked"), 0o755)
+
+	c, err := countFolder(context.Background(), root, func(count) {})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := count{Files: 5, Folders: 3, Bytes: 9, Unreadable: 1}
+	if os.Getuid() == 0 {
+		want = count{Files: 6, Folders: 3, Bytes: 18}
+	}
+	if c != want {
+		t.Errorf("got %+v, want %+v", c, want)
+	}
+
+	if _, err := countFolder(context.Background(), filepath.Join(root, "missing"), func(count) {}); err == nil {
+		t.Error("a missing folder counted")
+	}
+	if _, err := countFolder(context.Background(), "/proc", func(count) {}); !errors.Is(err, errVirtual) {
+		t.Errorf("/proc counted: %v", err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := countFolder(ctx, root, func(count) {}); err == nil {
+		t.Error("a canceled count went on")
+	}
+}
+
+// A count goes beside a job, and ends with its numbers.
+func TestCountOverTheProtocol(t *testing.T) {
+	root := t.TempDir()
+	write(t, filepath.Join(root, "x", "f"), "12")
+	req, _ := json.Marshal(request{ID: 4, Op: "count", Path: root})
+	in, toSpored := io.Pipe()
+	fromSpored, out := io.Pipe()
+	go func() {
+		runFiles(in, out)
+		out.Close()
+	}()
+	go toSpored.Write(append(req, '\n'))
+	var last event
+	scanner := bufio.NewScanner(fromSpored)
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), `"done"`) {
+			json.Unmarshal(scanner.Bytes(), &last)
+			toSpored.Close()
+		}
+	}
+	if last.ID != 4 || last.Count == nil || *last.Count != (count{Files: 1, Folders: 1, Bytes: 2}) {
+		t.Errorf("done: %+v", last)
 	}
 }

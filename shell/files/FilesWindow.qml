@@ -461,6 +461,7 @@ FloatingWindow {
             theme: root.theme
             screen: root.screen
             entry: root.previewEntry
+            ops: root.ops
             // Of what it shows (the selection, once its file is ready).
             thumbnail: thumbs.thumbnailFor(preview.shownPath)
             timeFormat: root.timeFormat

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"sync"
@@ -19,13 +20,18 @@ import (
 //	→ {"id":7,"event":"progress","bytes":…,"items":…,"current":"name"}
 //	→ {"id":7,"event":"done","names":[…],"error":"","code":"","reason":"","canceled":false}
 //	← {"op":"cancel","id":7}
+//	← {"id":8,"op":"count","path":"/x"}
+//	→ {"id":8,"event":"count","count":{"files":…,"folders":…,"bytes":…}}
+//	→ {"id":8,"event":"done","count":{…},"error":"","canceled":false}
 //
 // One job at a time, in the order they come (the queue, and the questions,
-// are FileOps'). It ends when stdin closes (Files went), canceling the job
+// are FileOps'). A count (the quick view's, of a folder) isn't a job: it
+// starts at once, beside the job under way, and goes until it's done or
+// canceled. It ends when stdin closes (Files went), canceling the job
 // under way. Change `protocol` with any change to the messages: in dev mode
 // the QML comes from the checkout and spored from the package, and FileOps
 // goes back to its scripts when they don't match.
-const filesProtocol = 1
+const filesProtocol = 2
 
 type request struct {
 	ID      int      `json:"id"`
@@ -52,6 +58,8 @@ type event struct {
 	Code     string   `json:"code,omitempty"`
 	Reason   string   `json:"reason,omitempty"`
 	Canceled bool     `json:"canceled,omitempty"`
+	// count, and its done: what the folder holds so far.
+	Count *count `json:"count,omitempty"`
 }
 
 // What a job reports on the way: the encoder is shared with the reader's
@@ -114,6 +122,22 @@ func runFiles(in io.Reader, out io.Writer) {
 			}
 			delete(queued, req.ID)
 			mu.Unlock()
+			continue
+		}
+		if req.Op == "count" {
+			ctx, cancel := context.WithCancel(context.Background())
+			mu.Lock()
+			running[req.ID] = cancel
+			mu.Unlock()
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				rep.send(runCount(ctx, req, rep))
+				mu.Lock()
+				delete(running, req.ID)
+				mu.Unlock()
+				cancel()
+			}()
 			continue
 		}
 		mu.Lock()
@@ -187,6 +211,23 @@ func runJob(ctx context.Context, req request, rep *reporter) event {
 	done.Code = res.code
 	done.Reason = res.reason
 	done.Canceled = res.canceled
+	return done
+}
+
+func runCount(ctx context.Context, req request, rep *reporter) event {
+	c, err := countFolder(ctx, req.Path, func(c count) {
+		rep.send(event{ID: req.ID, Event: "count", Count: &c})
+	})
+	done := event{ID: req.ID, Event: "done", Count: &c}
+	if errors.Is(err, errVirtual) {
+		// No numbers: the quick view says only that it's a folder.
+		done.Count = nil
+	} else if ctx.Err() != nil {
+		done.Canceled = true
+	} else if err != nil {
+		done.Reason = reasonOf(err)
+		done.Error = "Couldn't read " + quoted(req.Path) + ": " + done.Reason
+	}
 	return done
 }
 

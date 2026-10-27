@@ -643,7 +643,7 @@ QtObject {
     // Without it (installed with no Go) or if it speaks another protocol (dev
     // mode: this QML from the checkout, spored from the package), the scripts
     // above do everything, as they did before spored.
-    readonly property int engineProtocol: 1
+    readonly property int engineProtocol: 2
 
     property Process engine: Process {
         // "starting" (waiting for its hello), "ready" or "off".
@@ -683,6 +683,27 @@ QtObject {
         }
     }
 
+    // The quick view's counts of a folder (spored's "count", which goes
+    // beside the jobs, not in the queue): id -> what to call with the count
+    // so far, whether it's done, and why it stopped if it couldn't read it.
+    property var counts: ({})
+
+    // Starts counting what `path` holds; its id, or 0 without spored (then
+    // nothing is counted).
+    function countFolder(path: string, report: var): int {
+        if (engine.state !== "ready") return 0
+        const id = ++engine.lastId
+        counts[id] = report
+        engine.send({ id: id, op: "count", path: path })
+        return id
+    }
+
+    function stopCounting(id: int): void {
+        if (!counts[id]) return
+        delete counts[id]
+        if (engine.state === "ready") engine.send({ op: "cancel", id: id })
+    }
+
     function engineSaid(line: string): void {
         let message
         try {
@@ -699,6 +720,13 @@ QtObject {
                 engine.running = false
             }
             if (!current) next()
+            return
+        }
+        const report = counts[message.id]
+        if (report) {
+            const done = message.event === "done"
+            if (done) delete counts[message.id]
+            report(message.count || null, done, message.error || "")
             return
         }
         const job = current
@@ -732,6 +760,10 @@ QtObject {
         engine.state = "off"
         // (An older spored, without `files`, doesn't say hello: it's stopped.)
         engine.running = false
+        // Counts under way stop (the quick view lets go of their numbers).
+        const stopped = counts
+        counts = ({})
+        for (const id in stopped) stopped[id](null, true, "")
         if (current && current.engine) {
             console.warn("spored stopped in the middle of a job")
             finish(1, ["ERROR Something went wrong"])

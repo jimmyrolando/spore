@@ -30,6 +30,9 @@ in one small Go program with no runtime dependencies.
   `RENAME_NOREPLACE`), a move to another disk with its progress, cancel
   as a message, and no quoting or argument-length limits. The queue and the
   questions stay in `shell/files/FileOps.qml`.
+  It also counts what a folder holds for the quick view (Space on a
+  folder): files, folders and their weight, growing as it walks, beside
+  whatever job is under way; moving on cancels it.
 
   It says hello with a protocol number first. Without spored, or with
   another protocol (dev mode: the QML from the checkout, spored from the

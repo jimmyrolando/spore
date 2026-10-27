@@ -34,6 +34,9 @@ PanelWindow {
     // see Thumbnails.qml).
     property string thumbnail: ""
     property string timeFormat: "hh:mm"
+    // Files' operations: spored counts what a folder holds (see FileOps'
+    // countFolder).
+    property var ops: null
     signal openRequested()
     signal closeRequested()
 
@@ -62,6 +65,7 @@ PanelWindow {
     // Gets the selected file ready; show() puts it on the card.
     function prepare(): void {
         stopMedia()
+        stopCounting()
         patience.stop()
         // A listing still going on (a big archive): stopped.
         lister.running = false
@@ -103,6 +107,9 @@ PanelWindow {
             renderPage(1)
         } else if (Util.extractable(name) && entry.size > 0) {
             listArchive()
+        } else if (entry.isDir) {
+            show("info", "", false)
+            countSoon.restart()
         } else {
             show("info", "", false)
         }
@@ -545,6 +552,59 @@ PanelWindow {
         }
     }
 
+    // --- Folders ---
+
+    // What the folder shown holds, all the way down, as spored counts it:
+    // { files, folders, bytes, unreadable }, growing until it's `counted`.
+    // Without spored, the card says only that it's a folder.
+    property var folderCount: null
+    property bool counted: false
+    property string countError: ""
+    property int countId: 0
+
+    function stopCounting(): void {
+        countSoon.stop()
+        if (countId && ops) ops.stopCounting(countId)
+        countId = 0
+        folderCount = null
+        counted = false
+        countError = ""
+    }
+
+    // Moving through folders with the arrows counts only the one it stops at.
+    property Timer countSoon: Timer {
+        interval: 150
+        onTriggered: root.startCounting()
+    }
+
+    function startCounting(): void {
+        if (!ops || !entry || !entry.isDir) return
+        const id = ops.countFolder(path, (count, done, error) => {
+            if (id !== root.countId) return
+            if (done) root.countId = 0
+            root.folderCount = count
+            root.counted = done
+            root.countError = error
+        })
+        countId = id
+    }
+
+    // "120 files in 14 folders · 2.4 GB", as an archive's summary says it;
+    // "Counting…" after it while it goes on.
+    readonly property string countText: {
+        const c = folderCount
+        if (countError) return "Couldn't look inside"
+        if (!c) return ""
+        const files = c.files === 1 ? "1 file" : c.files + " files"
+        const folders = c.folders === 1 ? "1 folder" : c.folders + " folders"
+        let text = c.files === 0 && c.folders === 0 ? (counted ? "Empty" : "")
+            : c.files === 0 ? folders + ", no files"
+            : files + (c.folders ? " in " + folders : "") + " · " + Util.humanSize(c.bytes)
+        if (!counted) text += (text ? " · " : "") + "Counting…"
+        else if (c.unreadable) text += " · some folders couldn't be read"
+        return text
+    }
+
     // --- Video and audio ---
 
     property size videoSize: Qt.size(0, 0)
@@ -608,6 +668,7 @@ PanelWindow {
 
     Component.onDestruction: {
         stopMedia()
+        stopCounting()
         if (pageLoading) removePage(pageLoading.file)
     }
 
@@ -1059,8 +1120,10 @@ PanelWindow {
                         UiText {
                             theme: root.theme
                             Layout.fillWidth: true
-                            visible: root.shown !== null && !root.shown.isDir
-                            text: root.shown ? Util.humanSize(root.shown.size) : ""
+                            // A file's size; what a folder holds.
+                            visible: text !== ""
+                            text: !root.shown ? "" : root.shown.isDir ? root.countText : Util.humanSize(root.shown.size)
+                            wrapMode: Text.Wrap
                             color: root.theme.muted
                         }
                         UiText {
