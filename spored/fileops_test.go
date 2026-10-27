@@ -344,3 +344,67 @@ func TestCountOverTheProtocol(t *testing.T) {
 		t.Errorf("done: %+v", last)
 	}
 }
+
+// The second count of a folder starts with the first one's numbers.
+func TestCountAgain(t *testing.T) {
+	root := t.TempDir()
+	write(t, filepath.Join(root, "f"), "12")
+	in, toSpored := io.Pipe()
+	fromSpored, out := io.Pipe()
+	go func() {
+		runFiles(in, out)
+		out.Close()
+	}()
+	ask := func(id int) {
+		req, _ := json.Marshal(request{ID: id, Op: "count", Path: root})
+		toSpored.Write(append(req, '\n'))
+	}
+	go ask(1)
+	var events []event
+	scanner := bufio.NewScanner(fromSpored)
+	for scanner.Scan() {
+		var e event
+		json.Unmarshal(scanner.Bytes(), &e)
+		events = append(events, e)
+		if e.Event == "done" && e.ID == 1 {
+			write(t, filepath.Join(root, "g"), "1")
+			go ask(2)
+		}
+		if e.Event == "done" && e.ID == 2 {
+			toSpored.Close()
+		}
+	}
+	var again, last event
+	for _, e := range events {
+		if e.ID == 2 && e.Event == "count" {
+			again = e
+		}
+		if e.ID == 2 && e.Event == "done" {
+			last = e
+		}
+	}
+	if !again.Again || again.Count == nil || again.Count.Files != 1 {
+		t.Errorf("again: %+v", again)
+	}
+	if last.Count == nil || last.Count.Files != 2 || last.Count.Bytes != 3 {
+		t.Errorf("done: %+v", last)
+	}
+}
+
+// What a job changes is forgotten: its count, what's inside, and every
+// folder above it.
+func TestForgetCounts(t *testing.T) {
+	known := newFolderCounts()
+	for _, p := range []string{"/a", "/a/b", "/a/b/c", "/a/x", "/d"} {
+		known.put(p, count{Files: 1})
+	}
+	known.forget("/a/b")
+	left := []string{}
+	for p := range known.m {
+		left = append(left, p)
+	}
+	sort.Strings(left)
+	if !reflect.DeepEqual(left, []string{"/a/x", "/d"}) {
+		t.Errorf("left: %v", left)
+	}
+}

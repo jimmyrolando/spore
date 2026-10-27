@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -22,6 +23,7 @@ import (
 //	← {"op":"cancel","id":7}
 //	← {"id":8,"op":"count","path":"/x"}
 //	→ {"id":8,"event":"count","count":{"files":…,"folders":…,"bytes":…}}
+//	   ("again":true: what an earlier count found, while it's counted again)
 //	→ {"id":8,"event":"done","count":{…},"error":"","canceled":false}
 //
 // One job at a time, in the order they come (the queue, and the questions,
@@ -60,6 +62,8 @@ type event struct {
 	Canceled bool     `json:"canceled,omitempty"`
 	// count, and its done: what the folder holds so far.
 	Count *count `json:"count,omitempty"`
+	// count: what an earlier count found, while it's counted again.
+	Again bool `json:"again,omitempty"`
 }
 
 // What a job reports on the way: the encoder is shared with the reader's
@@ -80,6 +84,7 @@ func runFiles(in io.Reader, out io.Writer) {
 	rep.enc.SetEscapeHTML(false)
 	rep.send(map[string]any{"hello": "spored", "protocol": filesProtocol})
 
+	known := newFolderCounts()
 	jobs := make(chan request, 64)
 	var mu sync.Mutex
 	running := map[int]context.CancelFunc{}
@@ -99,7 +104,7 @@ func runFiles(in io.Reader, out io.Writer) {
 			if canceled {
 				cancel()
 			}
-			rep.send(runJob(ctx, req, rep))
+			rep.send(runJob(ctx, req, rep, known))
 			mu.Lock()
 			delete(running, req.ID)
 			mu.Unlock()
@@ -132,7 +137,7 @@ func runFiles(in io.Reader, out io.Writer) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				rep.send(runCount(ctx, req, rep))
+				rep.send(runCount(ctx, req, rep, known))
 				mu.Lock()
 				delete(running, req.ID)
 				mu.Unlock()
@@ -185,8 +190,14 @@ func (p *progress) flush() {
 	p.rep.send(event{ID: p.id, Event: "progress", Bytes: p.bytes, Items: p.items, Current: p.current})
 }
 
-func runJob(ctx context.Context, req request, rep *reporter) event {
+func runJob(ctx context.Context, req request, rep *reporter, known *folderCounts) event {
 	done := event{ID: req.ID, Event: "done"}
+	// The folders it changes weigh something else now: before (a count
+	// beside it would keep what it saw) and after.
+	if req.Op != "check" {
+		known.forget(changed(req)...)
+		defer known.forget(changed(req)...)
+	}
 	var res result
 	switch req.Op {
 	case "check":
@@ -214,11 +225,21 @@ func runJob(ctx context.Context, req request, rep *reporter) event {
 	return done
 }
 
-func runCount(ctx context.Context, req request, rep *reporter) event {
-	c, err := countFolder(ctx, req.Path, func(c count) {
+// A folder counted before: its numbers at once, and no others until the
+// new count is done (they would grow from zero up to them again).
+func runCount(ctx context.Context, req request, rep *reporter, known *folderCounts) event {
+	seen := func(c count) {
 		rep.send(event{ID: req.ID, Event: "count", Count: &c})
-	})
+	}
+	if c, ok := known.get(req.Path); ok {
+		rep.send(event{ID: req.ID, Event: "count", Count: &c, Again: true})
+		seen = func(count) {}
+	}
+	c, err := countFolder(ctx, req.Path, seen)
 	done := event{ID: req.ID, Event: "done", Count: &c}
+	if err == nil {
+		known.put(req.Path, c)
+	}
 	if errors.Is(err, errVirtual) {
 		// No numbers: the quick view says only that it's a folder.
 		done.Count = nil
@@ -229,6 +250,16 @@ func runCount(ctx context.Context, req request, rep *reporter) event {
 		done.Error = "Couldn't read " + quoted(req.Path) + ": " + done.Reason
 	}
 	return done
+}
+
+// Where a job changes things.
+func changed(req request) []string {
+	paths := append([]string{req.Dest, req.Path}, req.Sources...)
+	paths = append(paths, req.Paths...)
+	if req.Op == "rename" && req.Path != "" {
+		paths = append(paths, filepath.Join(filepath.Dir(req.Path), req.Name))
+	}
+	return paths
 }
 
 // A job's end: see event.

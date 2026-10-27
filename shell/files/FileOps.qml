@@ -685,7 +685,8 @@ QtObject {
 
     // The quick view's counts of a folder (spored's "count", which goes
     // beside the jobs, not in the queue): id -> what to call with the count
-    // so far, whether it's done, and why it stopped if it couldn't read it.
+    // so far, whether it's done, why it stopped if it couldn't read it, and
+    // whether the count is an earlier one's (shown while it's counted again).
     property var counts: ({})
 
     // Starts counting what `path` holds; its id, or 0 without spored (then
@@ -726,7 +727,7 @@ QtObject {
         if (report) {
             const done = message.event === "done"
             if (done) delete counts[message.id]
-            report(message.count || null, done, message.error || "")
+            report(message.count || null, done, message.error || "", message.again === true)
             return
         }
         const job = current

@@ -559,6 +559,9 @@ PanelWindow {
     // Without spored, the card says only that it's a folder.
     property var folderCount: null
     property bool counted: false
+    // The numbers are the last count's (spored remembers them while Files
+    // is open), shown while it's counted again.
+    property bool recounting: false
     property string countError: ""
     property int countId: 0
 
@@ -568,6 +571,7 @@ PanelWindow {
         countId = 0
         folderCount = null
         counted = false
+        recounting = false
         countError = ""
     }
 
@@ -579,18 +583,19 @@ PanelWindow {
 
     function startCounting(): void {
         if (!ops || !entry || !entry.isDir) return
-        const id = ops.countFolder(path, (count, done, error) => {
+        const id = ops.countFolder(path, (count, done, error, again) => {
             if (id !== root.countId) return
             if (done) root.countId = 0
             root.folderCount = count
             root.counted = done
+            root.recounting = again
             root.countError = error
         })
         countId = id
     }
 
     // "120 files in 14 folders · 2.4 GB", as an archive's summary says it;
-    // "Counting…" after it while it goes on.
+    // "Counting…" after it while it goes on ("Checking…" counting again).
     readonly property string countText: {
         const c = folderCount
         if (countError) return "Couldn't look inside"
@@ -600,7 +605,7 @@ PanelWindow {
         let text = c.files === 0 && c.folders === 0 ? (counted ? "Empty" : "")
             : c.files === 0 ? folders + ", no files"
             : files + (c.folders ? " in " + folders : "") + " · " + Util.humanSize(c.bytes)
-        if (!counted) text += (text ? " · " : "") + "Counting…"
+        if (!counted) text += (text ? " · " : "") + (recounting ? "Checking…" : "Counting…")
         else if (c.unreadable) text += " · some folders couldn't be read"
         return text
     }

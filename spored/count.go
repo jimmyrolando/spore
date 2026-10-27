@@ -5,6 +5,8 @@ import (
 	"errors"
 	"io/fs"
 	"path/filepath"
+	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -50,6 +52,73 @@ var virtualFS = map[int64]bool{
 
 // A folder of the kernel's (/proc, /sys): nothing to count.
 var errVirtual = errors.New("a virtual filesystem")
+
+// The counts already made, for as long as Files is open: Space on a folder
+// counted before shows its numbers at once while it's counted again. What
+// Files changes is forgotten (see forget). Only the folders asked for: a
+// subfolder's numbers from its parent's walk can be far off (a hard link
+// weighs in whichever folder is walked first, and builds and git leave
+// thousands).
+type folderCounts struct {
+	mu sync.Mutex
+	m  map[string]count
+}
+
+// Past this many it starts over.
+const maxCounts = 10000
+
+func newFolderCounts() *folderCounts {
+	return &folderCounts{m: map[string]count{}}
+}
+
+func (k *folderCounts) get(path string) (count, bool) {
+	if k == nil {
+		return count{}, false
+	}
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	c, ok := k.m[path]
+	return c, ok
+}
+
+func (k *folderCounts) put(path string, c count) {
+	if k == nil {
+		return
+	}
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	if len(k.m) >= maxCounts {
+		k.m = map[string]count{}
+	}
+	k.m[path] = c
+}
+
+// Forgets the counts that something changed at `paths` makes wrong: theirs,
+// what's inside them, and every folder above them.
+func (k *folderCounts) forget(paths ...string) {
+	if k == nil {
+		return
+	}
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	for _, path := range paths {
+		if path == "" {
+			continue
+		}
+		path = filepath.Clean(path)
+		for p := range k.m {
+			if strings.HasPrefix(p, path+"/") {
+				delete(k.m, p)
+			}
+		}
+		for p := path; ; p = filepath.Dir(p) {
+			delete(k.m, p)
+			if p == "/" || p == "." {
+				break
+			}
+		}
+	}
+}
 
 // Counts what's in `root` (not root itself), calling `seen` at most every
 // 200 ms on the way. A file with several hard links weighs once, as du
