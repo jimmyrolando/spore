@@ -16,12 +16,15 @@ Item {
     property string acceptValue: buttons.length ? buttons[0].value : ""
     property string cancelValue: buttons.length ? buttons[buttons.length - 1].value : ""
     signal answered(string value)
+    // The dimmed area's corners (over a rounded card).
+    property real radius: 0
 
     onVisibleChanged: if (visible) card.forceActiveFocus()
 
     Rectangle {
         anchors.fill: parent
         color: root.theme.alpha(root.theme.crust, 0.45)
+        radius: root.radius
 
         // The window behind waits.
         MouseArea {
