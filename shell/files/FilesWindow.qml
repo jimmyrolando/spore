@@ -175,8 +175,23 @@ FloatingWindow {
                 else gone = true
             }
             if (gone) root.selection = next
+            // What was deleted from here: the selection goes to what took its
+            // place (or the last one), so the quick view goes on with it.
+            if (gone && root.landAt >= 0 && Object.keys(next).length === 0) {
+                root.select(Math.min(root.landAt, folders.count - 1))
+                root.landAt = -1
+            }
             root.selectIfListed()
         }
+    }
+
+    // The row the selection goes to once what's being deleted (to the Trash
+    // or for good) leaves the folder: the first selected one's (-1: none).
+    property int landAt: -1
+
+    function landAfterDeleting(names: var): void {
+        const rows = names.map(name => folders.rowOf(name)).filter(row => row >= 0)
+        landAt = rows.length ? Math.min(...rows) : -1
     }
 
     // What an operation made (a paste, a zip, an extracted folder), selected
@@ -316,6 +331,7 @@ FloatingWindow {
         confirmation = null
         focusView()
         if (!asked || value !== "delete") return
+        if (asked.action !== "empty") landAfterDeleting(asked.names.map(Util.baseName))
         if (asked.action === "purge") ops.purge(root, asked.names)
         else if (asked.action === "remove") ops.remove(root, asked.names)
         else if (asked.action === "empty") ops.emptyTrash(root)
@@ -574,6 +590,7 @@ FloatingWindow {
         message = ""
         renaming = ""
         selectWhenListed = []
+        landAt = -1
         folder = path
         onDrive = status === "recent" ? "" : mountOf(path)
         filterField.text = ""
@@ -689,7 +706,9 @@ FloatingWindow {
     }
 
     function trashSelection(): void {
-        if (!inTrash) ops.trash(root, selectedPaths())
+        if (inTrash) return
+        landAfterDeleting(Object.keys(selection))
+        ops.trash(root, selectedPaths())
     }
 
     // The archives selected, each into a folder here (FileOps.extract).

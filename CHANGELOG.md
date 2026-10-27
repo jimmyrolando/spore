@@ -6,6 +6,13 @@ newest first. A line is added here each time something new reaches `main`.
 
 ## Unreleased
 
+### October 27
+
+- **Deleting keeps your place.** After sending files to the Trash (or deleting
+  them for good), the selection goes to the next one, or the one before if it
+  was the last. With the quick view open, it goes on showing that one: going
+  through wallpapers deleting the ones you don't want no longer closes it.
+
 ### October 26
 
 - **Files shows its progress in a card.** A copy, a move, a zip or emptying
