@@ -37,6 +37,14 @@ PanelWindow {
     // Files' operations: spored counts what a folder holds (see FileOps'
     // countFolder).
     property var ops: null
+    // Hidden for a moment (the Files window asks something, which would be
+    // under it): a video or a song stops, and starts again after.
+    property bool stepAside: false
+    visible: !stepAside
+    onStepAsideChanged: {
+        if (stepAside) stopMedia()
+        else if (kind === "video" || kind === "audio") startSoon.restart()
+    }
     signal openRequested()
     signal closeRequested()
 
