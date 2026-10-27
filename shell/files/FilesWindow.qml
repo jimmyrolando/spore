@@ -440,6 +440,10 @@ FloatingWindow {
     // follows it. It closes with nothing selected and when this window loses
     // the focus (another app, the file opened with its app).
     property bool quickView: false
+    // Something the window asks or offers (a question, Open With, its menu):
+    // the quick view, above every window, steps aside meanwhile.
+    readonly property bool asking: confirmation !== null || openWithEntry !== null || contextMenu.visible
+        || (ops.question !== null && ops.question.origin === root)
     readonly property string previewKind: quickViewLoader.item ? quickViewLoader.item.kind : ""
     readonly property bool previewPlaying: quickViewLoader.item ? quickViewLoader.item.mediaReady : false
     // A PDF's page in the quick view: "3/12" ("" for anything else).
@@ -477,6 +481,8 @@ FloatingWindow {
             theme: root.theme
             screen: root.screen
             entry: root.previewEntry
+            // Above every window, it would hide what the window asks.
+            stepAside: root.asking
             // Of what it shows (the selection, once its file is ready).
             thumbnail: thumbs.thumbnailFor(preview.shownPath)
             timeFormat: root.timeFormat

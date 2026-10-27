@@ -34,6 +34,14 @@ PanelWindow {
     // see Thumbnails.qml).
     property string thumbnail: ""
     property string timeFormat: "hh:mm"
+    // Hidden for a moment (the Files window asks something, which would be
+    // under it): a video or a song stops, and starts again after.
+    property bool stepAside: false
+    visible: !stepAside
+    onStepAsideChanged: {
+        if (stepAside) stopMedia()
+        else if (kind === "video" || kind === "audio") startSoon.restart()
+    }
     signal openRequested()
     signal closeRequested()
 
