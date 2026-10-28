@@ -59,6 +59,8 @@ QtObject {
     readonly property bool cancelable: current !== null && ["transfer", "extract", "compress"].includes(current.kind)
     // A paste waiting for an answer: { origin, text, count }.
     property var question: null
+    // Others that came meanwhile (another window's paste): asked after it.
+    property var nextQuestions: []
 
     // Done: what it was ("copy" or "move", a paste or a drop; "rename",
     // "mkdir", "extract", "compress", "trash", "remove", "restore", "purge" or
@@ -117,7 +119,7 @@ QtObject {
         // wait, and then ask whether to keep both.
         const same = j => j && (j.kind === "check" || j.kind === "transfer") && j.mode === mode && j.folder === folder
             && j.paths.length === paths.length && j.paths.every((p, i) => p === paths[i])
-        if (same(current) || queue.some(same) || (question && same(question.job))) {
+        if (same(current) || queue.some(same) || (question && same(question.job)) || nextQuestions.some(q => same(q.job))) {
             failed(origin, (mode === "move" ? "Already moving " : "Already copying ")
                 + (paths.length === 1 ? "“" + baseName(paths[0]) + "”" : "those " + paths.length + " items") + " there")
             return false
@@ -138,7 +140,32 @@ QtObject {
         if (!asked) return
         question = null
         if (choice !== "cancel") run(Object.assign({}, asked.job, { kind: "transfer", policy: choice }))
-        else if (asked.job.mode === "move" && asked.job.fromClipboard) clipboard = { mode: "move", paths: asked.job.paths }
+        else unasked(asked)
+        while (nextQuestions.length && !question) {
+            const next = nextQuestions[0]
+            nextQuestions = nextQuestions.slice(1)
+            ask(next)
+        }
+    }
+
+    // A question shows in its window; with one already open it waits its
+    // turn. With the window gone (closed while it checked) nothing is pasted.
+    function ask(asked: var): void {
+        if (!asked.origin) unasked(asked)
+        else if (question) nextQuestions = nextQuestions.concat([asked])
+        else question = asked
+    }
+
+    // A window closing: its questions go unanswered, nothing is pasted.
+    function dropQuestions(origin: var): void {
+        for (const asked of nextQuestions.filter(q => q.origin === origin)) unasked(asked)
+        nextQuestions = nextQuestions.filter(q => q.origin !== origin)
+        if (question && question.origin === origin) answer("cancel")
+    }
+
+    // Not pasted: a cut goes back to the clipboard.
+    function unasked(asked: var): void {
+        if (asked.job.mode === "move" && asked.job.fromClipboard) clipboard = { mode: "move", paths: asked.job.paths }
     }
 
     // Each archive into the folder it's in (see extractScript).
@@ -838,13 +865,13 @@ QtObject {
             const transfer = Object.assign({}, job, { kind: "transfer", policy: "keep" })
             if (lines.length) {
                 const into = "“" + baseName(job.folder) + "”"
-                question = {
+                ask({
                     origin: job.origin,
                     job: transfer,
                     count: lines.length,
                     text: (lines.length === 1 ? "“" + lines[0] + "” already exists" : lines.length + " items already exist")
                         + " in " + into + "."
-                }
+                })
             } else {
                 queue = [transfer].concat(queue)
             }

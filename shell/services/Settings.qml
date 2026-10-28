@@ -201,7 +201,18 @@ Scope {
     // The folder has to exist to write (a user without a settings.json yet).
     Component.onCompleted: Quickshell.execDetached(["mkdir", "-p", path.slice(0, path.lastIndexOf("/"))])
 
+    // The text last applied: save() applies it at once and the FileView reads
+    // it back a moment later, which was all the same again.
+    property string applied: ""
+
+    // Lists and objects are assigned only when what's in them changed: a new
+    // one, even an equal one, rebuilt what shows it (the bar, every widget).
+    function same(a: var, b: var): bool {
+        return JSON.stringify(a) === JSON.stringify(b)
+    }
+
     function apply(json: string): void {
+        if (json === applied) return
         let s
         try {
             s = JSON.parse(json)
@@ -213,6 +224,7 @@ Scope {
             console.warn("Invalid settings.json (not an object), keeping previous values")
             return
         }
+        applied = json
         // A value of another type than its default (edited by hand: "five" for
         // a number, {} for a name) gets the default, with a warning. Assigning
         // it threw, and every key after it was left as it was.
@@ -229,20 +241,24 @@ Scope {
         screenOffAfter = get("idle", "screenOffAfter")
         suspendAfter = get("idle", "suspendAfter")
         caffeineScreenOffAfter = get("idle", "caffeineScreenOffAfter")
-        launcher = get("bar", "launcher")
+        const launcherValue = get("bar", "launcher")
+        if (!same(launcher, launcherValue)) launcher = launcherValue
         clockFormat = get("bar", "clockFormat")
         barOpacity = Math.max(0, Math.min(1, get("bar", "opacity")))
         barStyle = ["full", "floating", "pill"].includes(get("bar", "style")) ? get("bar", "style") : defaults.bar.style
-        barLayout = cleanLayout(get("bar", "layout"))
+        const layout = cleanLayout(get("bar", "layout"))
+        if (!same(barLayout, layout)) barLayout = layout
         const opts = get("bar", "widgetOptions")
-        widgetOptions = opts && typeof opts === "object" && !Array.isArray(opts) ? opts : {}
+        const options = opts && typeof opts === "object" && !Array.isArray(opts) ? opts : {}
+        if (!same(widgetOptions, options)) widgetOptions = options
         wallpaperDirRaw = get("picker", "wallpaperDir")
         // "hex" was nix-rnd's first name.
         const transition = get("wallpaper", "transition") === "hex" ? "nix-rnd" : get("wallpaper", "transition")
         wallpaperTransition = wallpaperTransitions.includes(transition) ? transition : "fade"
         videoWallpapers = get("wallpaper", "videos") !== false
         const weather = get("lock", "weather")
-        lockWeather = weather && typeof weather === "object" && !Array.isArray(weather) ? weather : null
+        const place = weather && typeof weather === "object" && !Array.isArray(weather) ? weather : null
+        if (!same(lockWeather, place)) lockWeather = place
         lockUnits = get("lock", "units") === "imperial" ? "imperial" : "metric"
         clipboardMaxItems = Math.max(1, get("clipboard", "maxItems"))
         fontInterface = get("fonts", "interface") || defaults.fonts.interface

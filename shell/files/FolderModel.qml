@@ -40,6 +40,9 @@ QtObject {
     // The names in the folder (name -> true), shown or not: the window keeps
     // its selection to the ones still there.
     property var present: ({})
+    // Goes up with any change to the entries, also one that keeps the count
+    // (a rename, a new size): what's read with entry() follows it.
+    property int revision: 0
 
     onFilterTextChanged: refilter()
     onModelChanged: countShown()
@@ -159,6 +162,13 @@ QtObject {
         function onRowsRemoved() { root.changed() }
         function onLayoutChanged() { root.changed() }
         function onModelReset() { root.changed() }
+        function onDataChanged() { root.revision++ }
+    }
+    // The proxy doesn't say when the last entries go (thousands deleted at
+    // once): the count stayed, with ghosts of them selected.
+    property Connections emptied: Connections {
+        target: root.source
+        function onCountChanged() { if (root.source.count === 0) root.changed() }
     }
 
     function changed(): void {
@@ -171,6 +181,7 @@ QtObject {
             for (let i = 0; i < source.count; i++) names[source.get(i, "fileName")] = true
         }
         present = names
+        revision++
     }
 
     // The proxy only sorts, so it has as many rows as the source: asking it
@@ -227,6 +238,8 @@ QtObject {
             return { name: e.fileName, path: e.filePath, isDir: e.fileIsDir, size: e.fileSize, modified: e.fileModified }
         }
         const i = proxy.mapToSource(proxy.index(row, 0)).row
+        // The proxy still catching up with a change.
+        if (i < 0) return null
         return {
             name: source.get(i, "fileName"),
             path: source.get(i, "filePath"),
@@ -273,5 +286,29 @@ QtObject {
                 return proxy.mapFromSource(source.index(i, 0)).row
         }
         return -1
+    }
+
+    // The first row of those called `names`, or -1: one pass over the folder
+    // (rowOf for each name took seconds with thousands selected).
+    function firstRowOf(names: var): int {
+        const wanted = new Set(names)
+        if (filterText) {
+            for (let row = 0; row < matches.count; row++)
+                if (wanted.has(matches.get(row).fileName)) return row
+            return -1
+        }
+        if (recent) {
+            for (let i = 0; i < recentList.count; i++)
+                if (wanted.has(recentList.get(i).fileName)) return i
+            return -1
+        }
+        // The source isn't in the order shown: the lowest row of them all.
+        let first = -1
+        for (let i = 0; i < source.count; i++) {
+            if (!wanted.has(source.get(i, "fileName"))) continue
+            const row = proxy.mapFromSource(source.index(i, 0)).row
+            if (row >= 0 && (first < 0 || row < first)) first = row
+        }
+        return first
     }
 }
