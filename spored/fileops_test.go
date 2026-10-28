@@ -86,8 +86,11 @@ func TestCopyTreeKeepsLinksModesAndTimes(t *testing.T) {
 	if info, _ := os.Stat(filepath.Join(got, "sub", "b.sh")); info.Mode().Perm() != 0o755 {
 		t.Errorf("b.sh's mode: %v", info.Mode())
 	}
-	// The chown that keeps the owner cleared it.
-	if info, _ := os.Stat(filepath.Join(got, "suid")); info.Mode()&fs.ModeSetuid == 0 {
+	// The chown that keeps the owner cleared it. (Nix's build sandbox
+	// doesn't let a file be setuid: nothing to keep there.)
+	if info, _ := os.Stat(filepath.Join(folder, "suid")); info.Mode()&fs.ModeSetuid == 0 {
+		t.Log("no setuid here, not checked")
+	} else if info, _ := os.Stat(filepath.Join(got, "suid")); info.Mode()&fs.ModeSetuid == 0 {
 		t.Errorf("suid's mode: %v", info.Mode())
 	}
 	if info, _ := os.Stat(filepath.Join(got, "sub")); info.Mode().Perm() != 0o555 {
