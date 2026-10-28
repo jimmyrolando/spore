@@ -7,8 +7,10 @@ import (
 	"errors"
 	"io"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -79,7 +81,7 @@ func (r *reporter) send(v any) {
 	_ = r.enc.Encode(v)
 }
 
-func runFiles(in io.Reader, out io.Writer) {
+func runFiles(ctx context.Context, in io.Reader, out io.Writer) {
 	rep := &reporter{enc: json.NewEncoder(out)}
 	rep.enc.SetEscapeHTML(false)
 	rep.send(map[string]any{"hello": "spored", "protocol": filesProtocol})
@@ -112,12 +114,35 @@ func runFiles(in io.Reader, out io.Writer) {
 		}
 	}()
 
-	scanner := bufio.NewScanner(in)
-	// Tens of thousands of paths in one request.
-	scanner.Buffer(make([]byte, 1<<20), 256<<20)
-	for scanner.Scan() {
+	// Read apart, so a signal (ctx) ends it like stdin closing: a read on
+	// stdin can't be interrupted.
+	lines := make(chan []byte)
+	go func() {
+		defer close(lines)
+		scanner := bufio.NewScanner(in)
+		// Tens of thousands of paths in one request.
+		scanner.Buffer(make([]byte, 1<<20), 256<<20)
+		for scanner.Scan() {
+			line := append([]byte(nil), scanner.Bytes()...)
+			select {
+			case lines <- line:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	for {
+		var line []byte
+		open := false
+		select {
+		case line, open = <-lines:
+		case <-ctx.Done():
+		}
+		if !open {
+			break
+		}
 		var req request
-		if json.Unmarshal(scanner.Bytes(), &req) != nil {
+		if json.Unmarshal(line, &req) != nil {
 			continue
 		}
 		if req.Op == "cancel" {
@@ -272,5 +297,11 @@ type result struct {
 }
 
 func filesMain() {
-	runFiles(os.Stdin, os.Stdout)
+	// Files killed, or the session ending: stdout gone mustn't kill it
+	// (SIGPIPE) mid-copy, and a signal stops it like stdin closing, so a
+	// copy under way removes its hidden temporary instead of leaving it.
+	signal.Ignore(syscall.SIGPIPE)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGHUP, syscall.SIGINT)
+	defer stop()
+	runFiles(ctx, os.Stdin, os.Stdout)
 }

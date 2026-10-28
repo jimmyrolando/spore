@@ -355,7 +355,8 @@ func copyFile(ctx context.Context, src, dst string, info os.FileInfo, p *progres
 			return err
 		}
 	}
-	if err := out.Chmod(info.Mode().Perm() | info.Mode()&(fs.ModeSetuid|fs.ModeSetgid|fs.ModeSticky)); err != nil {
+	// Setuid and setgid come with the owner (keepOwnerAndTimes).
+	if err := out.Chmod(info.Mode().Perm() | info.Mode()&fs.ModeSticky); err != nil {
 		out.Close()
 		return err
 	}
@@ -369,7 +370,12 @@ func keepOwnerAndTimes(dst string, info os.FileInfo) {
 	if !ok {
 		return
 	}
-	_ = os.Lchown(dst, int(st.Uid), int(st.Gid))
+	owned := os.Lchown(dst, int(st.Uid), int(st.Gid)) == nil
+	// A chown clears a file's setuid and setgid (even to the same owner):
+	// they go back on after it, as cp -a does, only with the same owner.
+	if mode := info.Mode(); owned && mode.IsRegular() && mode&(fs.ModeSetuid|fs.ModeSetgid) != 0 {
+		_ = os.Chmod(dst, mode.Perm()|mode&(fs.ModeSetuid|fs.ModeSetgid|fs.ModeSticky))
+	}
 	times := []unix.Timespec{unix.NsecToTimespec(syscall.TimespecToNsec(st.Atim)), unix.NsecToTimespec(syscall.TimespecToNsec(st.Mtim))}
 	_ = unix.UtimesNanoAt(unix.AT_FDCWD, dst, times, unix.AT_SYMLINK_NOFOLLOW)
 }

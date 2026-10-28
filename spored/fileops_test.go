@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -61,6 +62,8 @@ func TestCopyTreeKeepsLinksModesAndTimes(t *testing.T) {
 	write(t, filepath.Join(folder, "a.txt"), "hello")
 	write(t, filepath.Join(folder, "sub", "b.sh"), "#!/bin/sh")
 	os.Chmod(filepath.Join(folder, "sub", "b.sh"), 0o755)
+	write(t, filepath.Join(folder, "suid"), "x")
+	os.Chmod(filepath.Join(folder, "suid"), 0o755|fs.ModeSetuid)
 	os.Symlink("a.txt", filepath.Join(folder, "link"))
 	os.Symlink("/nowhere", filepath.Join(folder, "broken"))
 	old := time.Date(2020, 1, 2, 3, 4, 5, 0, time.UTC)
@@ -82,6 +85,10 @@ func TestCopyTreeKeepsLinksModesAndTimes(t *testing.T) {
 	}
 	if info, _ := os.Stat(filepath.Join(got, "sub", "b.sh")); info.Mode().Perm() != 0o755 {
 		t.Errorf("b.sh's mode: %v", info.Mode())
+	}
+	// The chown that keeps the owner cleared it.
+	if info, _ := os.Stat(filepath.Join(got, "suid")); info.Mode()&fs.ModeSetuid == 0 {
+		t.Errorf("suid's mode: %v", info.Mode())
 	}
 	if info, _ := os.Stat(filepath.Join(got, "sub")); info.Mode().Perm() != 0o555 {
 		t.Errorf("sub's mode: %v", info.Mode())
@@ -224,7 +231,7 @@ func TestProtocol(t *testing.T) {
 	in, toSpored := io.Pipe()
 	fromSpored, out := io.Pipe()
 	go func() {
-		runFiles(in, out)
+		runFiles(context.Background(), in, out)
 		out.Close()
 	}()
 	go toSpored.Write(append(req, '\n'))
@@ -328,7 +335,7 @@ func TestCountOverTheProtocol(t *testing.T) {
 	in, toSpored := io.Pipe()
 	fromSpored, out := io.Pipe()
 	go func() {
-		runFiles(in, out)
+		runFiles(context.Background(), in, out)
 		out.Close()
 	}()
 	go toSpored.Write(append(req, '\n'))
@@ -352,7 +359,7 @@ func TestCountAgain(t *testing.T) {
 	in, toSpored := io.Pipe()
 	fromSpored, out := io.Pipe()
 	go func() {
-		runFiles(in, out)
+		runFiles(context.Background(), in, out)
 		out.Close()
 	}()
 	ask := func(id int) {
@@ -406,5 +413,24 @@ func TestForgetCounts(t *testing.T) {
 	sort.Strings(left)
 	if !reflect.DeepEqual(left, []string{"/a/x", "/d"}) {
 		t.Errorf("left: %v", left)
+	}
+}
+
+// A signal (Files killed, the session ending) ends it as stdin closing does,
+// though stdin stays open.
+func TestSignalEndsIt(t *testing.T) {
+	in, toSpored := io.Pipe()
+	defer toSpored.Close()
+	ctx, cancel := context.WithCancel(context.Background())
+	ended := make(chan struct{})
+	go func() {
+		runFiles(ctx, in, io.Discard)
+		close(ended)
+	}()
+	cancel()
+	select {
+	case <-ended:
+	case <-time.After(5 * time.Second):
+		t.Fatal("still running")
 	}
 }
