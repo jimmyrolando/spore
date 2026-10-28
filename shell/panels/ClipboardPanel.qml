@@ -32,6 +32,8 @@ PanelWindow {
     color: "transparent"
 
     Component.onCompleted: clipboard.refresh()
+    // Closed: copies no longer need the list made again (see `listed`).
+    Component.onDestruction: clipboard.listed = false
 
     // The compositor's window radius (Compositor.qml).
     property Compositor compositor: null

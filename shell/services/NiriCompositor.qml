@@ -261,6 +261,7 @@ Scope {
             break
         case "ConfigLoaded":
             radiusReader.running = true
+            outputsReader.rerun()
             break
         case "CastsChanged": {
             const map = {}
@@ -318,6 +319,13 @@ Scope {
                 return { name: d.name, width: m.width, height: m.height, refresh: m.refresh, scale: d.scale }
             })
         }
+    }
+
+    // niri's event stream says nothing about monitors: a screen plugged in or
+    // out is read here (and DisplayMemory puts back what was kept for it).
+    Connections {
+        target: Quickshell
+        function onScreensChanged(): void { outputsReader.rerun() }
     }
 
     Process {

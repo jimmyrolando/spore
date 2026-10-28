@@ -898,7 +898,7 @@ ShellRoot {
             caffeine: root.caffeine
 
             // Kept, so it comes back on the same section (hasOutputs, the strip).
-            onActiveSectionChanged: root.settingsSection = activeSection
+            onSectionRequested: (id) => root.settingsSection = id
             onCloseRequested: root.ui = "closed"
             onPreviewRequested: root.openPreview()
             onWallpaperChosen: (path) => root.chooseWallpaper(path)

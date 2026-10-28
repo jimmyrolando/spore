@@ -55,8 +55,21 @@ Scope {
         stdout: SplitParser {
             onRead: (line) => root.stored(line)
         }
+        // A new maxItems (settings.json, also when it's read just after this
+        // started) only reaches cliphist with the command: start it again.
+        readonly property int max: root.maxItems
+        property bool again: false
+        onMaxChanged: if (running) {
+            again = true
+            running = false
+        }
         // If wl-paste goes down (e.g. the compositor restarted), start it again.
-        onExited: (code) => { if (code !== 0) restartTimer.restart() }
+        onExited: (code) => {
+            if (again) {
+                again = false
+                running = true
+            } else if (code !== 0) restartTimer.restart()
+        }
         property Timer restartTimer: Timer {
             interval: 3000
             onTriggered: watcher.running = true
@@ -85,8 +98,8 @@ Scope {
 
     // --- List --------------------------------------------------------------------
 
-    // true from the first refresh (panel opened): until then, there's no need
-    // to relist on every copy.
+    // true while the panel is open (from its first refresh until it closes):
+    // otherwise there's no need to relist on every copy.
     property bool listed: false
 
     function refresh(): void {
