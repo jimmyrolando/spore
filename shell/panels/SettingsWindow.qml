@@ -198,8 +198,11 @@ PanelWindow {
         }
     }
 
-    // Section on open (shell.qml: spore-ipc settings open <id>).
+    // The section shown: shell.qml's (spore-ipc settings open <id>, the
+    // Control Center). A click in the sidebar asks it for another one, so
+    // the binding stays and those still move it.
     property string activeSection: "appearance"
+    signal sectionRequested(id: string)
     readonly property var current: sections.find(s => s.id === activeSection) || sections[0]
 
     // --- Values (read from and saved to settings.json) --------------------
@@ -1170,7 +1173,7 @@ PanelWindow {
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     cursorShape: Qt.PointingHandCursor
-                                    onClicked: root.activeSection = parent.modelData.id
+                                    onClicked: root.sectionRequested(parent.modelData.id)
                                 }
                             }
                         }

@@ -6,6 +6,29 @@ newest first. A line is added here each time something new reaches `main`.
 
 ## Unreleased
 
+### October 28
+
+- **A round of fixes from a review of the whole code.**
+  - A Wi-Fi password no longer gets wiped while you type it: every change in
+    a network's signal rebuilt the list.
+  - On niri, a monitor plugged in gets back the mode, scale and rotation kept
+    for it in Settings > Displays (before, only after opening About or
+    Displays).
+  - A notification that an app updates (a download's progress, a volume
+    script) shows the new text and pops up again, instead of the first one.
+  - Each change in Settings rebuilt the whole bar, twice, and fetched the
+    weather again: now only what changed moves.
+  - After a click in Settings' sidebar, `spore-ipc settings open` and the
+    Control Center still change the section.
+  - Changing the clipboard's `maxItems` reaches cliphist at once, and the
+    history is no longer listed again on every copy once the panel was opened.
+  - Files: after a rename, the selection follows the new name (F2 again,
+    Open With and the quick view used the old one); sending thousands of files
+    to the Trash no longer freezes the window for seconds, and the folder
+    shows empty after them, with nothing left selected; two "already exists"
+    questions at once (two windows) are asked one after the other, instead of
+    the second silently replacing the first.
+
 ### October 27
 
 - **Files' questions show on the quick view.** It's above every window, so a

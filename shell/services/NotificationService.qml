@@ -51,7 +51,7 @@ Scope {
 
     function add(n: var): void {
         n.tracked = true
-        const entry = {
+        let entry = {
             key: "n" + Date.now() + "-" + n.id,
             appName: n.appName || "",
             appIcon: n.appIcon || "",
@@ -62,6 +62,26 @@ Scope {
             time: Date.now(),
             live: n
         }
+        // An app that replaces it (a download's progress, a volume script's
+        // `notify-send -r`) changes this same notification: its entry is
+        // made again (a new object, so the cards see it) and pops up again.
+        // Several fields change at once: once, after them all.
+        const replaced = () => {
+            const i = root.history.indexOf(entry)
+            if (i < 0 || entry.removed) return
+            entry = Object.assign({}, entry, {
+                appIcon: n.appIcon || "", image: n.image || "", summary: n.summary || "",
+                body: n.body || "", urgency: n.urgency
+            })
+            const h = root.history.slice()
+            h[i] = entry
+            root.history = h
+            if (!root.dnd || n.urgency === NotificationUrgency.Critical)
+                root.popups = [entry.key].concat(root.popups.filter(k => k !== entry.key)).slice(0, 5)
+            saveTimer.restart()
+        }
+        for (const change of [n.summaryChanged, n.bodyChanged, n.imageChanged, n.appIconChanged, n.urgencyChanged])
+            change.connect(() => Qt.callLater(replaced))
         // If the app closes it, it stays in the history but without actions. Not
         // the ones being removed (removeMany): otherwise each one rebuilt the whole
         // history again.

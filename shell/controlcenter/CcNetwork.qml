@@ -228,7 +228,12 @@ ColumnLayout {
                     spacing: 6
 
                     Repeater {
-                        model: root.networks
+                        // ScriptModel and not the array: the sort follows every
+                        // signal change, and with the array each one rebuilt
+                        // every row, wiping a password being typed.
+                        model: ScriptModel {
+                            values: root.networks
+                        }
 
                         Rectangle {
                             id: net

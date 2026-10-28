@@ -83,6 +83,7 @@ FloatingWindow {
     property bool steering: false
     readonly property var current: {
         folders.count
+        folders.revision
         return currentRow >= 0 ? folders.entry(currentRow) : null
     }
 
@@ -190,8 +191,7 @@ FloatingWindow {
     property int landAt: -1
 
     function landAfterDeleting(names: var): void {
-        const rows = names.map(name => folders.rowOf(name)).filter(row => row >= 0)
-        landAt = rows.length ? Math.min(...rows) : -1
+        landAt = folders.firstRowOf(names)
     }
 
     // What an operation made (a paste, a zip, an extracted folder), selected
@@ -247,7 +247,10 @@ FloatingWindow {
 
     function names(max: int): var {
         const out = []
-        for (let row = 0; row < Math.min(max, folders.count); row++) out.push(folders.entry(row).name)
+        for (let row = 0; row < Math.min(max, folders.count); row++) {
+            const entry = folders.entry(row)
+            if (entry) out.push(entry.name)
+        }
         return out
     }
 
@@ -808,8 +811,8 @@ FloatingWindow {
         }
     }
 
-    // A question left open when the window closes: nothing is pasted.
-    Component.onDestruction: if (ops.question && ops.question.origin === root) ops.answer("cancel")
+    // Questions left open when the window closes: nothing is pasted.
+    Component.onDestruction: ops.dropQuestions(root)
 
     // --- Dragging files ---
 
