@@ -49,10 +49,10 @@ Settings → Idle.
 - It respects inhibitors: with a video playing in Firefox, nothing locks or
   turns off.
 - Caffeine (the `idleInhibitor` widget, the coffee cup) is for leaving the
-  machine working: nothing suspends, and the usual lock and screen off don't
-  run. After `idle.caffeineScreenOffAfter` (an hour; Settings → Idle →
-  Caffeine) it locks and turns off the monitors anyway, so a forgotten
-  Caffeine doesn't leave the screen on all night.
+  machine working: nothing suspends, and the lock and screen off use their
+  own times, `idle.caffeineLockAfter` and `idle.caffeineScreenOffAfter` (an
+  hour each; Settings → Idle → Caffeine), so a forgotten Caffeine doesn't
+  leave the screen on and unlocked all night.
 - `Compositor.qml` turns off the monitors (on niri, `power-off-monitors`);
   niri turns them back on with any key or mouse movement.
 - Before suspending it always locks (even if `lockAfter` is `0`) and waits a

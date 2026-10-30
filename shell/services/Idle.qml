@@ -31,29 +31,33 @@ Scope {
     readonly property int screenOffAfter: settings.screenOffAfter
     readonly property int suspendAfter: settings.suspendAfter
     // Caffeine (Control Center → Home): while it's on, nothing suspends on
-    // idle and the usual lock and screen off don't run. Only after
-    // caffeineScreenOffAfter (an hour by default) does the screen lock and
-    // turn off, so a forgotten Caffeine doesn't leave it on all night while
-    // the machine keeps working.
+    // idle, and the lock and screen off use their own, longer times (an hour
+    // by default), so a forgotten Caffeine doesn't leave the screen on and
+    // unlocked all night while the machine keeps working.
     property bool inhibited: false
+    readonly property int caffeineLockAfter: settings.caffeineLockAfter
     readonly property int caffeineScreenOffAfter: settings.caffeineScreenOffAfter
+
+    // The times in use: Caffeine's while it's on.
+    readonly property int currentLockAfter: inhibited ? caffeineLockAfter : lockAfter
+    readonly property int currentScreenOffAfter: inhibited ? caffeineScreenOffAfter : screenOffAfter
 
     // In a nested test niri (its screen is called "winit") there's never any
     // activity of its own: after suspendAfter seconds it would suspend the whole
     // machine. Nothing is done there.
     readonly property bool active: !(compositor && compositor.nested)
     Component.onCompleted: Qt.callLater(() => console.info("Idle:", active ? "enabled" : "disabled (nested compositor)"))
-    onInhibitedChanged: console.info("Idle:", inhibited ? "caffeine on, no suspending; screen off after "
+    onInhibitedChanged: console.info("Idle:", inhibited ? "caffeine on, no suspending; lock after "
+        + (caffeineLockAfter > 0 ? caffeineLockAfter + "s" : "never") + ", screen off after "
         + (caffeineScreenOffAfter > 0 ? caffeineScreenOffAfter + "s" : "never") : "caffeine off")
 
-    // [seconds] if that action runs, [] if not. Lock and suspend don't run
-    // with Caffeine on.
+    // [seconds] if that action runs, [] if not.
     function timeoutModel(seconds: int): var {
-        return active && !inhibited && seconds > 0 ? [seconds] : []
+        return active && seconds > 0 ? [seconds] : []
     }
 
     Variants {
-        model: root.timeoutModel(root.lockAfter)
+        model: root.timeoutModel(root.currentLockAfter)
         IdleMonitor {
             required property int modelData
             timeout: modelData
@@ -66,25 +70,21 @@ Scope {
     }
 
     // niri turns the monitors back on by itself, with any key or mouse movement.
-    // With Caffeine, its own time, and it locks first: nobody is watching.
+    // If the lock is due by now too (both times the same), it goes first.
     Variants {
-        model: {
-            const seconds = root.inhibited ? root.caffeineScreenOffAfter : root.screenOffAfter
-            return root.active && seconds > 0 ? [seconds] : []
-        }
+        model: root.timeoutModel(root.currentScreenOffAfter)
         IdleMonitor {
             required property int modelData
             timeout: modelData
             respectInhibitors: true
             onIsIdleChanged: {
                 if (!isIdle) return
-                if (root.inhibited) {
-                    console.info("Idle: caffeine on, locking and turning off monitors after", timeout + "s")
+                console.info("Idle: turning off monitors after", timeout + "s")
+                if (root.currentLockAfter > 0 && root.currentLockAfter <= timeout) {
                     root.lock.lock()
                     screenOffDelay.restart()
-                } else {
-                    console.info("Idle: turning off monitors after", timeout + "s")
-                    if (root.compositor) root.compositor.powerOffMonitors()
+                } else if (root.compositor) {
+                    root.compositor.powerOffMonitors()
                 }
             }
         }
@@ -98,8 +98,9 @@ Scope {
     }
 
     // Lock first, even if lockAfter is 0: never wake up without a lock.
+    // Never with Caffeine on.
     Variants {
-        model: root.timeoutModel(root.suspendAfter)
+        model: root.timeoutModel(root.inhibited ? 0 : root.suspendAfter)
         Scope {
             required property int modelData
 

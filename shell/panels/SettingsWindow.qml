@@ -174,9 +174,13 @@ PanelWindow {
                 { key: "screenOffAfter", label: "Turn off screen", type: "minutes", step: 1 },
                 { key: "suspendAfter", label: "Suspend", hint: "Always locks first", type: "minutes", step: 5 }
             ]},
+            // The same rows as Timers; Suspend can't change (Caffeine's whole point).
             { title: "Caffeine", caffeineState: true, rows: [
-                { key: "caffeineScreenOffAfter", label: "Turn off screen", hint: "Never suspends; locks first", type: "minutes",
-                  steps: [1, 5, 10, 15, 30, 45, 60, 90, 120, 180, 240] }
+                { key: "caffeineLockAfter", label: "Lock screen", hint: "Minutes of inactivity before locking", type: "minutes",
+                  steps: [1, 5, 10, 15, 30, 45, 60, 90, 120, 180, 240] },
+                { key: "caffeineScreenOffAfter", label: "Turn off screen", type: "minutes",
+                  steps: [1, 5, 10, 15, 30, 45, 60, 90, 120, 180, 240] },
+                { key: "caffeineSuspend", label: "Suspend", hint: "Never while Caffeine is on", type: "minutes", fixed: true }
             ]}
         ]},
         // Its view is built separately (see "About" below).
@@ -260,7 +264,9 @@ PanelWindow {
         case "lockAfter": return settings.lockAfter
         case "screenOffAfter": return settings.screenOffAfter
         case "suspendAfter": return settings.suspendAfter
+        case "caffeineLockAfter": return settings.caffeineLockAfter
         case "caffeineScreenOffAfter": return settings.caffeineScreenOffAfter
+        case "caffeineSuspend": return 0
         case "style": return settings.barStyle
         case "opacity": return settings.barOpacity
         case "clockFormat": return settings.clockFormat
@@ -313,7 +319,7 @@ PanelWindow {
             return
         }
         switch (key) {
-        case "lockAfter": case "screenOffAfter": case "suspendAfter": case "caffeineScreenOffAfter":
+        case "lockAfter": case "screenOffAfter": case "suspendAfter": case "caffeineLockAfter": case "caffeineScreenOffAfter":
             settings.save({ idle: { [key]: v } })
             break
         case "style": settings.save({ bar: { style: v } }); break
@@ -750,14 +756,16 @@ PanelWindow {
                 }
             }
 
-            // Stepper: minutes (0 = Never) or percentage.
+            // Stepper: minutes (0 = Never) or percentage. A `fixed` row shows only
+            // its value, aligned with the others' (the buttons keep their space).
             RowLayout {
                 visible: ["minutes", "percent"].includes(rowItem.row.type)
                 spacing: 4
 
                 SmallButton {
                     icon: "minus"
-                    enabled: !rowItem.disabled
+                    opacity: rowItem.row.fixed === true ? 0 : 1
+                    enabled: !rowItem.disabled && rowItem.row.fixed !== true
                     onClicked: root.set(rowItem.row.key, root.stepValue(rowItem.row, rowItem.val, -1))
                 }
 
@@ -772,7 +780,8 @@ PanelWindow {
 
                 SmallButton {
                     icon: "plus"
-                    enabled: !rowItem.disabled
+                    opacity: rowItem.row.fixed === true ? 0 : 1
+                    enabled: !rowItem.disabled && rowItem.row.fixed !== true
                     onClicked: root.set(rowItem.row.key, root.stepValue(rowItem.row, rowItem.val, 1))
                 }
             }

@@ -6,6 +6,13 @@ newest first. A line is added here each time something new reaches `main`.
 
 ## Unreleased
 
+### October 29
+
+- **Caffeine has its own lock time.** Settings → Idle → Caffeine shows the
+  same rows as Timers: Lock screen and Turn off screen (an hour each by
+  default), and Suspend, fixed at Never. Before, the screen only locked when
+  it turned off, so locking sooner meant turning the screen off too.
+
 ### October 28
 
 - **A round of fixes from a review of the whole code.**

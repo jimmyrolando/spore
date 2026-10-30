@@ -19,6 +19,7 @@ Scope {
             lockAfter: 300,
             screenOffAfter: 600,
             suspendAfter: 1800,
+            caffeineLockAfter: 3600,
             caffeineScreenOffAfter: 3600
         },
         bar: {
@@ -74,8 +75,9 @@ Scope {
     property int lockAfter: defaults.idle.lockAfter
     property int screenOffAfter: defaults.idle.screenOffAfter
     property int suspendAfter: defaults.idle.suspendAfter
-    // With Caffeine on, nothing suspends, but after this the screen locks and
-    // turns off anyway (0 = it stays on).
+    // With Caffeine on nothing suspends, but after these the screen locks and
+    // turns off anyway (0 = never).
+    property int caffeineLockAfter: defaults.idle.caffeineLockAfter
     property int caffeineScreenOffAfter: defaults.idle.caffeineScreenOffAfter
     // The NixOS button's command (a list: program and arguments).
     property var launcher: defaults.bar.launcher
@@ -166,7 +168,7 @@ Scope {
     // edited by hand.
     function save(changes: var): void {
         const s = {
-            idle: { lockAfter: lockAfter, screenOffAfter: screenOffAfter, suspendAfter: suspendAfter, caffeineScreenOffAfter: caffeineScreenOffAfter },
+            idle: { lockAfter: lockAfter, screenOffAfter: screenOffAfter, suspendAfter: suspendAfter, caffeineLockAfter: caffeineLockAfter, caffeineScreenOffAfter: caffeineScreenOffAfter },
             bar: { launcher: launcher, clockFormat: clockFormat, opacity: barOpacity, style: barStyle, layout: barLayout, widgetOptions: widgetOptions },
             picker: { wallpaperDir: wallpaperDirRaw },
             wallpaper: { transition: wallpaperTransition, videos: videoWallpapers },
@@ -240,6 +242,7 @@ Scope {
         lockAfter = get("idle", "lockAfter")
         screenOffAfter = get("idle", "screenOffAfter")
         suspendAfter = get("idle", "suspendAfter")
+        caffeineLockAfter = get("idle", "caffeineLockAfter")
         caffeineScreenOffAfter = get("idle", "caffeineScreenOffAfter")
         const launcherValue = get("bar", "launcher")
         if (!same(launcher, launcherValue)) launcher = launcherValue
@@ -267,6 +270,7 @@ Scope {
         fontMonospace = (s.fonts ? get("fonts", "monospace") : typeof oldFont === "string" ? oldFont : "") || defaults.fonts.monospace
         fontBar = get("fonts", "bar") || ""
         console.info("Settings: loaded (idle: lock", lockAfter + "s, screen off", screenOffAfter
-            + "s, suspend", suspendAfter + "s, caffeine screen off", caffeineScreenOffAfter + "s)")
+            + "s, suspend", suspendAfter + "s, caffeine lock", caffeineLockAfter
+            + "s, caffeine screen off", caffeineScreenOffAfter + "s)")
     }
 }
