@@ -59,7 +59,7 @@ let
 in
 stdenvNoCC.mkDerivation {
   pname = "spore-shell";
-  version = "0.2.2";
+  version = "0.3.0";
 
   src = lib.fileset.toSource {
     root = ../.;
