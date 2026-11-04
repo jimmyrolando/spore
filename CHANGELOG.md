@@ -4,10 +4,21 @@ Spore is my daily driver, and it grows with what I find I'm missing. This is
 what has been added since [v0.1.0](https://github.com/jimmyrolando/spore/releases/tag/v0.1.0),
 newest first. A line is added here each time something new reaches `main`.
 
-## Unreleased
+## v0.3.0, November 4, 2026
 
 ### October 29
 
+- **"Show in folder" opens Files.** A browser's download list (and any other
+  app's) now opens Spore Files with the file selected. It's the job of
+  spored, a small new program in Go that comes with Spore and starts with the
+  session. If Thunar is installed and its daemon starts first, Thunar keeps
+  "Show in folder" for itself.
+- **Files' copies, moves, renames and deletes are done by spored**: progress
+  by the bytes really copied, renames that never replace a file, and no limit
+  on how many files go at once.
+- **The quick view counts what a folder holds.** Space on a folder shows its
+  files, folders and weight, growing as it counts; one counted before shows
+  its numbers at once.
 - **Caffeine has its own lock time.** Settings → Idle → Caffeine shows the
   same rows as Timers: Lock screen and Turn off screen (an hour each by
   default), and Suspend, fixed at Never. Before, the screen only locked when
