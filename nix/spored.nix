@@ -26,7 +26,7 @@ buildGoModule {
   ];
 
   meta = {
-    description = "Spore's services: org.freedesktop.FileManager1 for Spore Files";
+    description = "Spore's services: FileManager1 for Spore Files, the lock before sleeping, drive events";
     homepage = "https://github.com/jimmyrolando/spore";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;

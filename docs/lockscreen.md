@@ -61,7 +61,8 @@ Settings → Idle.
   `systemctl suspend`, another app), the screen locks first: a delay
   inhibitor makes logind wait for the lock (up to 2 s), and
   `systemd-inhibit --list` shows it as Spore. `loginctl lock-session` locks
-  it too.
+  it too. spored (`spored/logind.go`) does this; without it, a script in
+  `Idle.qml` (`gdbus monitor` and `systemd-inhibit`) does the same.
 - In a nested niri (screen `winit`) it's disabled: there's never any
   activity there and it would end up suspending the whole machine. Nor does
   it follow logind there: its sleep and its sessions are the real ones.

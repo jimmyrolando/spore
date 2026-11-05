@@ -4,6 +4,16 @@ Spore is my daily driver, and it grows with what I find I'm missing. This is
 what has been added since [v0.1.0](https://github.com/jimmyrolando/spore/releases/tag/v0.1.0),
 newest first. A line is added here each time something new reaches `main`.
 
+## Unreleased
+
+### November 5
+
+- **spored watches logind and the drives.** The lock before the system
+  sleeps and the drives' events (plugged in, mounted, unplugged) now come
+  from spored, listening to D-Bus, instead of scripts reading `gdbus
+  monitor` and `udisksctl monitor`: six fewer processes in the session.
+  Without spored (installed with no Go), the scripts still do it.
+
 ## v0.3.0, November 4, 2026
 
 ### October 29

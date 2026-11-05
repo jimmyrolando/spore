@@ -8,11 +8,12 @@ in one small Go program with no runtime dependencies.
 - The shell (QML) draws everything and keeps doing what Quickshell does
   well: PipeWire, Bluetooth, MPRIS, the tray, notifications, and one-line
   commands (`niri msg`, `hyprctl`).
-- spored does what needs a real program: owning a D-Bus name, and later,
-  work that's fragile in `sh -c` scripts inside QML.
-- `shell/services/Spored.qml` starts it with the session (not in a nested
-  test session, which shares the real bus) and starts it again if it ends.
-  It runs with the session's environment and ends with the shell.
+- spored does what needs a real program: owning a D-Bus name, following
+  D-Bus signals, and work that's fragile in `sh -c` scripts inside QML.
+- `shell/services/Spored.qml` starts it with the session and starts it
+  again if it ends.
+  It runs with the session's environment and ends with the shell. In a
+  nested test session it runs with `-nested`: only the drives.
 
 ## What it offers
 
@@ -38,12 +39,22 @@ in one small Go program with no runtime dependencies.
   another protocol (dev mode: the QML from the checkout, spored from the
   package), FileOps does everything with its old scripts. They go once
   releases ship spored built.
+- Before the system sleeps (logind.go): it holds a delay inhibitor, tells
+  the shell to lock when logind says PrepareForSleep, and lets the sleep
+  go on when the lock is up (or after 2 s); it takes the inhibitor again on
+  waking. logind's Session.Lock for this session (`loginctl
+  lock-session`) locks too.
+- The drives (drives.go): UDisks2's signals, a burst gathered into one
+  event, and the shell reads the drives again with lsblk.
+- The shell and spored talk in JSON lines (the protocol is at the top of
+  service.go). The hello lists what's working; for the rest, and without
+  spored, Idle.qml and DrivesService.qml keep their old scripts.
 
 ## Next candidates
 
 1. The Trash (send, restore, purge, empty), following the freedesktop spec,
    other disks' Trash folders included. Today `gio trash` and scripts.
-2. Anything else that today is a script watching a D-Bus monitor.
+2. Mounting, unmounting and ejecting through UDisks2 (today `udisksctl`).
 
 Compressing and extracting stay with bsdtar: Go reads neither 7z nor rar.
 

@@ -172,6 +172,28 @@ check_errors "at startup"
 # the wrapper kept the session's PATH.
 tr '\0' '\n' < "/proc/$shell_pid/environ" | grep -qxF "SPORE_SESSION=PATH=$PATH" ||
     bad "the shell's wrapper didn't keep the session's PATH (SPORE_SESSION)"
+# spored, in a nested session: only the drives (no FileManager1 or logind,
+# the real session's), in place of `udisksctl monitor`. If it ends, the
+# monitor takes over until it's back.
+child() { # the shell's child whose command line matches $1
+    for c in $(pgrep -P "$shell_pid"); do
+        tr '\0' ' ' < "/proc/$c/cmdline" 2>/dev/null | grep -q -- "$1" && { echo "$c"; return; }
+    done
+}
+for _ in $(seq 25); do grep -q 'spored: drives$' "$log" && break; sleep 0.2; done
+grep -q 'spored: drives$' "$log" || bad "spored didn't say hello with only the drives (nested)"
+spored_pid=$(child 'spored -files')
+[ -n "$spored_pid" ] && ! tr '\0' ' ' < "/proc/$spored_pid/cmdline" | grep -q -- '-nested' &&
+    bad "spored runs without -nested in a nested session"
+[ -n "$(child 'udisksctl monitor')" ] && bad "udisksctl monitor runs beside spored"
+if [ -n "$spored_pid" ]; then
+    kill "$spored_pid"
+    for _ in $(seq 15); do [ -n "$(child 'udisksctl monitor')" ] && break; sleep 0.2; done
+    [ -n "$(child 'udisksctl monitor')" ] || bad "with spored gone, udisksctl monitor didn't take over"
+    for _ in $(seq 30); do [ -z "$(child 'udisksctl monitor')" ] && [ -n "$(child 'spored -files')" ] && break; sleep 0.2; done
+    [ -n "$(child 'spored -files')" ] || bad "spored didn't start again"
+    [ -n "$(child 'udisksctl monitor')" ] && bad "spored came back and udisksctl monitor stayed"
+fi
 
 echo "3. IPC"
 targets=$(WAYLAND_DISPLAY=$disp "$qs" ipc --pid "$shell_pid" show | sed -n 's/^target //p')

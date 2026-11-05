@@ -143,7 +143,8 @@ Scope {
 
     // The system can go to sleep without Spore asking: the lid, the power
     // key, `systemctl suspend`, another app. The screen locks first anyway,
-    // and `loginctl lock-session` locks it too. The script follows logind's
+    // and `loginctl lock-session` locks it too. spored does it when it's
+    // there (see below); else this script. It follows logind's
     // signals and prints "sleep" or "lock". A delay inhibitor (`systemd-inhibit
     // --list` shows it as Spore) makes logind wait for the lock: after "sleep",
     // the script waits up to 2 s for "locked" on its input, lets go of the
@@ -177,12 +178,30 @@ Scope {
             esac
         done`
 
+    // spored does the same (spored/logind.go) without the script's four
+    // processes or reading gdbus's text. The script is for when there's no
+    // spored, or while it starts or restarts.
+    property Spored spored: null
+    readonly property bool viaSpored: spored !== null && spored.logind
+    readonly property bool scriptWatches: active && !viaSpored
+    onScriptWatchesChanged: sleepWatch.running = scriptWatches
+
+    Connections {
+        target: root.spored
+        function onSleepComing(): void {
+            root.heard("sleep")
+        }
+        function onLockAsked(): void {
+            root.heard("lock")
+        }
+    }
+
     // setpriv: the script ends with the shell, and what it starts with it.
     // Not in a nested test niri (see `active`): logind and its sleep are the
     // real session's.
     Process {
         id: sleepWatch
-        running: root.active
+        running: root.scriptWatches
         stdinEnabled: true
         command: ["setpriv", "--pdeathsig", "TERM", "sh", "-c", root.sleepScript, "_", Quickshell.env("XDG_SESSION_ID") || ""]
         stdout: SplitParser {
@@ -195,7 +214,7 @@ Scope {
     Timer {
         id: restartWatch
         interval: 3000
-        onTriggered: if (root.active) sleepWatch.running = true
+        onTriggered: if (root.scriptWatches) sleepWatch.running = true
     }
 
     // "sleep" heard and the lock not up yet (for 2 s at most, like the script).
@@ -219,7 +238,8 @@ Scope {
         if (!sleepPending || !root.lock.secure) return
         sleepPending = false
         sleepTimeout.stop()
-        sleepWatch.write("locked\n")
+        if (viaSpored) spored.locked()
+        else sleepWatch.write("locked\n")
     }
 
     Connections {

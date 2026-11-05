@@ -656,6 +656,7 @@ ShellRoot {
     // External drives: the bar widget and the Drives page.
     DrivesService {
         id: drivesService
+        spored: sporedService
     }
 
     // The screens' brightness (Control Center → Home).
@@ -681,9 +682,12 @@ ShellRoot {
         }
     }
 
-    // Spore's services (spored): "Show in folder" opens Files.
+    // Spore's services (spored): "Show in folder" opens Files, the lock
+    // before sleeping (Idle) and the drives' events (DrivesService). In a
+    // nested test session, only the drives.
     Spored {
-        enabled: !sessionCompositor.nested
+        id: sporedService
+        nested: sessionCompositor.nested
     }
 
     // Bluetooth pairing with an agent (the Control Center's Bluetooth page).
@@ -1032,6 +1036,7 @@ ShellRoot {
     // in settings.json (see Idle.qml).
     Idle {
         lock: lockScreen
+        spored: sporedService
         settings: shellSettings
         compositor: sessionCompositor
         inhibited: root.caffeine

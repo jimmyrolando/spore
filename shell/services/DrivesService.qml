@@ -5,8 +5,8 @@ import "../common/session.js" as Session
 
 // External drives (USB and other hotplug), for the bar widget, the Control
 // Center's Drives page and Files; and, for Files only, the internal disks'
-// volumes (`internal`). The data comes from lsblk; `udisksctl
-// monitor` reports when something is plugged in, mounted or unplugged, and
+// volumes (`internal`). The data comes from lsblk; spored (or `udisksctl
+// monitor`) reports when something is plugged in, mounted or unplugged, and
 // only then is it read again (no polling). Automounting is still done by
 // udiskie; here we mount, unmount and eject with udisksctl.
 Scope {
@@ -138,9 +138,27 @@ Scope {
         onTriggered: root.refresh()
     }
 
+    // The events: spored's (UDisks2's signals) when the shell has it, else
+    // `udisksctl monitor`. Files has no spored of its own: the monitor.
+    property Spored spored: null
+    readonly property bool viaSpored: spored !== null && spored.drives
+
+    Connections {
+        target: root.spored
+        function onDrivesEvent(): void {
+            refreshLater.restart()
+        }
+    }
+
+    // Switching, something may have changed in between: read them again.
+    onViaSporedChanged: {
+        monitor.running = !viaSpored
+        refreshLater.restart()
+    }
+
     Process {
         id: monitor
-        running: true
+        running: !root.viaSpored
         // Dies with the shell (setpriv --pdeathsig): otherwise every restart left
         // one alive.
         command: ["setpriv", "--pdeathsig", "TERM", "udisksctl", "monitor"]
@@ -154,7 +172,7 @@ Scope {
     Timer {
         id: restartMonitor
         interval: 3000
-        onTriggered: monitor.running = true
+        onTriggered: if (!root.viaSpored) monitor.running = true
     }
 
     // Used space changes without udisks events: re-read it every so often while
