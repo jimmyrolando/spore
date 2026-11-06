@@ -15,6 +15,7 @@ newest first. A line is added here each time something new reaches `main`.
   and the window borders in the palette speak Lua to it too. Older versions
   go on as before, with `hyprland.conf`.
 - The manual install lists Go, which builds spored, among what it needs.
+- Music has its icon again in Files' sidebar (Lucide renamed it).
 
 ### November 5
 

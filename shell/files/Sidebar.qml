@@ -169,7 +169,7 @@ Rectangle {
             dirs="\${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs"
             [ -f "$dirs" ] && . "$dirs"
             for place in "monitor:\${XDG_DESKTOP_DIR:-$HOME/Desktop}" "file-text:\${XDG_DOCUMENTS_DIR:-$HOME/Documents}" \\
-                "download:\${XDG_DOWNLOAD_DIR:-$HOME/Downloads}" "music:\${XDG_MUSIC_DIR:-$HOME/Music}" \\
+                "download:\${XDG_DOWNLOAD_DIR:-$HOME/Downloads}" "sixteenth-notes:\${XDG_MUSIC_DIR:-$HOME/Music}" \\
                 "image:\${XDG_PICTURES_DIR:-$HOME/Pictures}" "film:\${XDG_VIDEOS_DIR:-$HOME/Videos}"; do
                 dir=\${place#*:}
                 [ -d "$dir" ] && [ "$dir" != "$HOME" ] && printf '%s\\n' "$place"
