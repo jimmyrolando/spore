@@ -1,6 +1,6 @@
 # Manual install (other distros)
 
-Spore's reference platform is NixOS with niri. Tried so far on Arch (Quickshell 0.3.2, Qt 6.12, niri 26.04 and Hyprland 0.56); this is the
+Spore's reference platform is NixOS with niri. Tried so far on Arch (Quickshell 0.3.2, Qt 6.12, niri 26.04, and Hyprland 0.56 and 0.57); this is the
 path to follow elsewhere. It needs systemd.
 
 ```sh
@@ -17,7 +17,10 @@ config (the `binds` lines go inside the `binds { }` block you already have: niri
 ## Hyprland
 
 If you use Hyprland instead of niri, add the lines in
-[`examples/hyprland.conf`](../examples/hyprland.conf) to its config. The shell
+[`examples/hyprland.lua`](../examples/hyprland.lua) to `~/.config/hypr/hyprland.lua`
+(Hyprland 0.57 and newer, whose config is Lua), or the ones in
+[`examples/hyprland.conf`](../examples/hyprland.conf) to `hyprland.conf` (0.56 and
+older). The shell
 looks the same; the differences are that the bar shows the workspaces that
 exist (Hyprland makes one when you go to it), and there's no indicator for
 ongoing screen captures.
@@ -40,10 +43,11 @@ ongoing screen captures.
 | `cups` (`lpstat`, `lpadmin`, `ippfind`), `avahi` | the Printers section (finding printers needs Avahi) |
 | PipeWire, NetworkManager, BlueZ, UPower, udisks2 | the Control Center's pages |
 | Noto Sans, JetBrainsMono Nerd Font | the fonts |
+| `go`, only to install (optional) | spored, built by `install.sh`: a browser's "Show in folder" opens Spore Files, and Files' copies, the lock before sleeping and the drives go through it instead of scripts |
 
 On Arch: `quickshell niri matugen ffmpeg glib2 libarchive poppler cliphist
 wl-clipboard bluez-utils adw-gtk-theme papirus-icon-theme dconf curl gawk rofi kitty ddcutil swaylock noto-fonts
-ttf-jetbrains-mono-nerd qt6-multimedia qt6-imageformats kimageformats`
+ttf-jetbrains-mono-nerd qt6-multimedia qt6-imageformats kimageformats go`
 Plus the services: `pipewire-pulse wireplumber networkmanager bluez upower
 udisks2 mesa` (enable `NetworkManager`, `bluetooth`, `upower` and `udisks2`).
 Package names may need adjusting.

@@ -72,7 +72,7 @@ if [ ! -e "$rofi/config.rasi" ]; then
   mkdir -p "$rofi" && cp "$repo/examples/rofi/config.rasi" "$repo/examples/rofi/spore.rasi" "$rofi/" && echo "Rofi's theme is in $rofi."
 fi
 
-# Hyprland errors on a `source` that matches no file, and the shell only writes
+# Hyprland 0.56 and older errors on a `source` that matches no file, and the shell only writes
 # its colors once it runs (after Hyprland has read the config): an empty one
 # keeps the first start clean. The shell fills it in.
 hypr=${XDG_STATE_HOME:-$HOME/.local/state}/spore/hypr
@@ -99,7 +99,8 @@ Needs root, once (this script doesn't do it):
     (or system-auth, depending on the distro).
   - External monitors' brightness: load i2c-dev (/etc/modules-load.d/i2c.conf)
     and add your user to the i2c group.
-Then start "spore" with the session: spawn-at-startup in niri (examples/niri.kdl)
-or exec-once in Hyprland (examples/hyprland.conf); both have the shortcuts.
+Then start "spore" with the session: spawn-at-startup in niri (examples/niri.kdl);
+in Hyprland, examples/hyprland.lua (0.57 and newer)
+or examples/hyprland.conf (older); they all have the shortcuts.
 The greeter isn't installed by this script.
 MSG

@@ -6,6 +6,16 @@ newest first. A line is added here each time something new reaches `main`.
 
 ## Unreleased
 
+### November 6
+
+- **Hyprland 0.57 works again.** Its config is Lua now (`hyprland.lua`), so
+  the lines from `examples/hyprland.conf` were ignored and Spore didn't start
+  with the session. `examples/hyprland.lua` has them for 0.57 and newer. The
+  bar's workspaces, turning the screens off, logging out, Settings → Displays
+  and the window borders in the palette speak Lua to it too. Older versions
+  go on as before, with `hyprland.conf`.
+- The manual install lists Go, which builds spored, among what it needs.
+
 ### November 5
 
 - **spored watches logind and the drives.** The lock before the system

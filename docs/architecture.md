@@ -106,8 +106,9 @@ another compositor means writing another file like these and loading it in
 `Compositor.qml`.
 
 Two compositor things live outside the shell: `SystemTheme.qml` writes the
-border colors to `niri.kdl` and `hypr/colors.conf` (as it does for kitty or
-GTK), and the greeter launches the session the user picks.
+border colors to `niri.kdl` and `hypr/colors.conf` (`hypr/colors.lua` for
+Hyprland 0.57 and newer, applied with `hyprctl eval`) as it does for kitty or
+GTK, and the greeter launches the session the user picks.
 
 ### Imports
 

@@ -14,6 +14,12 @@ import Quickshell.Hyprland
 // Differences with niri, hidden here: Hyprland's workspaces are global (one
 // list, each on a monitor), so `index` is made up (the position among its
 // monitor's, by id), and it has no screen-capture list (`casts` stays empty).
+//
+// Hyprland 0.57 made its config Lua: since then a dispatch is Lua
+// (`hl.dsp.focus({ workspace = 2 })`) and `hyprctl keyword` is gone (a
+// monitor is set with `hyprctl eval "hl.monitor({...})"`). Both are spoken,
+// by the version; the monitors aren't read until it's known, so a monitor
+// put back by DisplayMemory at startup gets the right one.
 Scope {
     id: root
 
@@ -22,6 +28,16 @@ Scope {
 
     readonly property string name: "Hyprland"
     property string version: ""
+    property bool versionKnown: false
+    readonly property bool lua: {
+        const v = /^(\d+)\.(\d+)/.exec(version)
+        return v !== null && (+v[1] > 0 || +v[2] >= 57)
+    }
+
+    // The same dispatch, in the syntax of the Hyprland that's running.
+    function dispatch(classic: string, luaCode: string): void {
+        Hyprland.dispatch(lua ? luaCode : classic)
+    }
 
     property var workspaces: []
     property var windows: []
@@ -35,26 +51,26 @@ Scope {
     property int cornerRadius: 0
     readonly property int innerRadius: cornerRadius > 0 ? Math.max(4, Math.round(cornerRadius / 2)) : 0
 
-    readonly property var quitCommand: ["hyprctl", "dispatch", "exit"]
+    readonly property var quitCommand: ["hyprctl", "dispatch", lua ? "hl.dsp.exit()" : "exit"]
 
     // Hyprland's dispatchers take a workspace by its id (it creates it if
     // missing) and a window by its address.
     function focusWorkspace(ws: var): void {
-        if (ws) Hyprland.dispatch("workspace " + ws.id)
+        if (ws) dispatch("workspace " + ws.id, "hl.dsp.focus({ workspace = " + ws.id + " })")
     }
 
     function focusWindow(w: var): void {
-        if (w) Hyprland.dispatch("focuswindow address:" + w.id)
+        if (w) dispatch("focuswindow address:" + w.id, "hl.dsp.focus({ window = \"address:" + w.id + "\" })")
     }
 
     // They come back on with a key or the mouse if the user's config has
-    // misc:key_press_enables_dpms and mouse_move_enables_dpms (examples/hyprland.conf).
+    // misc:key_press_enables_dpms and mouse_move_enables_dpms (examples/hyprland.lua).
     function powerOffMonitors(): void {
-        Hyprland.dispatch("dpms off")
+        dispatch("dpms off", "hl.dsp.dpms({ action = \"off\" })")
     }
 
     function quit(): void {
-        Hyprland.dispatch("exit")
+        dispatch("exit", "hl.dsp.exit()")
     }
 
     // "Preview on desktop": Hyprland creates a workspace when it's asked for,
@@ -73,20 +89,26 @@ Scope {
     }
 
     // Hyprland's `monitor` rule sets everything at once, so what isn't changing
-    // is taken from the monitor as it is now. `hyprctl keyword` lasts until
-    // the config is reloaded.
+    // is taken from the monitor as it is now. It lasts until the config is
+    // reloaded (`hyprctl keyword`, or `hyprctl eval` since 0.57).
     function configureDisplay(name: string, change: var): void {
         const d = displays.find(x => x.name === name)
         if (!d) return
+        // A JSON string is a valid Lua one for a connector's name.
+        const output = "output = " + JSON.stringify(name)
         if (change.on === false) {
-            Quickshell.execDetached(["hyprctl", "keyword", "monitor", name + ",disable"])
+            Quickshell.execDetached(lua
+                ? ["hyprctl", "eval", "hl.monitor({ " + output + ", disabled = true })"]
+                : ["hyprctl", "keyword", "monitor", name + ",disable"])
         } else {
             const m = change.mode ?? (d.mode >= 0 ? d.modes[d.mode] : null)
             const res = m ? m.width + "x" + m.height + "@" + m.refresh.toFixed(3) : "preferred"
             const scale = change.scale ?? d.scale
-            const transform = change.transform ?? d.transform
-            Quickshell.execDetached(["hyprctl", "keyword", "monitor",
-                [name, res, d.x + "x" + d.y, scale, "transform", transforms.indexOf(transform)].join(",")])
+            const transform = transforms.indexOf(change.transform ?? d.transform)
+            Quickshell.execDetached(lua
+                ? ["hyprctl", "eval", "hl.monitor({ " + [output, "disabled = false", "mode = \"" + res + "\"",
+                    "position = \"" + d.x + "x" + d.y + "\"", "scale = " + scale, "transform = " + transform].join(", ") + " })"]
+                : ["hyprctl", "keyword", "monitor", [name, res, d.x + "x" + d.y, scale, "transform", transform].join(",")])
         }
         displaysRefresh.restart()
         displaysLater.restart()
@@ -116,10 +138,16 @@ Scope {
     component Reader: Process {
         id: reader
         property bool again: false
+        // Until it's true, a rerun waits; it runs once it is.
+        property bool ready: true
         signal parsed(var data)
         function rerun(): void {
-            if (running) again = true
+            if (!ready || running) again = true
             else running = true
+        }
+        onReadyChanged: if (ready && again) {
+            again = false
+            running = true
         }
         stdout: StdioCollector {
             onStreamFinished: {
@@ -159,7 +187,10 @@ Scope {
 
     Reader {
         id: monitorsReader
-        running: true
+        // After the version (see the top): DisplayMemory may change a monitor
+        // as soon as they're listed.
+        ready: root.versionKnown
+        again: true
         command: ["hyprctl", "-j", "monitors", "all"]
         onParsed: (data) => {
             // `monitors all` also lists the ones that are off.
@@ -273,6 +304,8 @@ Scope {
                 } catch (e) {}
             }
         }
+        // Also when it failed: the monitors are read anyway.
+        onExited: root.versionKnown = true
     }
 
     Process {

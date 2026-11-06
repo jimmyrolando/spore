@@ -60,7 +60,7 @@ provides the Wayland, PipeWire, Bluetooth and MPRIS plumbing out of the box.
 Spore is, in the end, a pile of QML on top of it.
 
 The latest version is 0.3.0 (see [what's new](CHANGELOG.md)). It is tested on NixOS 26.05 with niri 26.04,
-and Quickshell 0.3.1 from nixos-unstable. The manual install was also tried on Arch (Quickshell 0.3.2, Qt 6.12), with niri and with Hyprland 0.56 (in a virtual machine only).
+and Quickshell 0.3.1 from nixos-unstable. The manual install was also tried on Arch (Quickshell 0.3.2, Qt 6.12), with niri and with Hyprland 0.56 and 0.57 (in a virtual machine only).
 
 ## Principles
 
@@ -108,7 +108,7 @@ Spore comes in two pieces, installed separately:
 | [`configuration.nix`](examples/configuration.nix) | the system: what the shell uses (audio, network, Bluetooth, drives, fonts) and the greeter |
 | [`home.nix`](examples/home.nix) | each user: the shell and the apps it themes |
 | [`niri.kdl`](examples/niri.kdl) | niri's lines: the shell at startup, the shortcuts, the border colors |
-| [`hyprland.conf`](examples/hyprland.conf) | the same for Hyprland |
+| [`hyprland.lua`](examples/hyprland.lua) | the same for Hyprland 0.57 and newer ([`hyprland.conf`](examples/hyprland.conf) for older ones) |
 | [`rofi/`](examples/rofi) | the app launcher's theme, in Spore's colors |
 
 In short:
