@@ -25,6 +25,8 @@ PanelWindow {
     property NotificationService notifications: null
     // External drives, for the drives widget.
     property DrivesService drives: null
+    // The laptop's battery, for the battery widget.
+    property BatteryService battery: null
     // Idle inhibitor (shell.qml's "caffeine").
     property bool caffeine: false
     signal caffeineToggled()
@@ -203,6 +205,16 @@ PanelWindow {
         }
     }
 
+    Component {
+        id: batteryWidget
+        BatteryStatus {
+            theme: bar.theme
+            service: bar.battery
+            showPercent: bar.settings.widgetOption("battery", "showPercent")
+            onClicked: bar.controlCenterRequested("battery", bar.zoneOf("battery"))
+        }
+    }
+
     // A red dot while the screen is being recorded or shared.
     Component {
         id: screencastWidget
@@ -309,7 +321,7 @@ PanelWindow {
         launcher: launcherWidget, about: aboutWidget, controlCenter: controlCenterWidget, activeWindow: activeWindowWidget, apps: appsWidget, screencast: screencastWidget,
         system: systemWidget, cpu: cpuWidget, memory: memoryWidget, gpu: gpuWidget, workspaces: workspacesWidget, clipboard: clipboardWidget, appImages: appImagesWidget,
         audio: audioWidget, bluetooth: bluetoothWidget, network: networkWidget,
-        clock: clockWidget, power: powerWidget, idleInhibitor: idleInhibitorWidget, notifications: notificationsWidget, drives: drivesWidget
+        clock: clockWidget, power: powerWidget, idleInhibitor: idleInhibitorWidget, notifications: notificationsWidget, drives: drivesWidget, battery: batteryWidget
     })
 
     // A capsule with a group's widgets. It hides if none of them is shown

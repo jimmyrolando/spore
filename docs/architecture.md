@@ -54,18 +54,19 @@ decides.
 | `BluetoothAgent.qml` | pairing with an agent: while a pairing runs, `bluetoothctl` is BlueZ's default agent, and the code to type on a keyboard (or to compare with a phone) shows on the Bluetooth page; the device is trusted once paired |
 | `BrightnessService.qml` | the screens' brightness: external monitors over DDC/CI (ddcutil) and a laptop's backlight, read when the Control Center opens; a slider sends only its latest value |
 | `DrivesService.qml` | external drives (udisks): mount, unmount, eject; and, for Files, the internal disks' volumes worth opening (with their `/etc/fstab` folder) |
+| `BatteryService.qml` | the laptop's battery (UPower), Low Power Mode (the Power Saver profile, on by itself at `battery.lowPowerAt`) and the low battery warnings; `qs ipc call battery simulate` fakes one for testing |
 | `SystemTheme.qml` | carries the palette and mode to GTK, kitty, rofi, Zed… ([appearance](appearance.md)) |
 | `Idle.qml` | lock, turn off monitors and suspend on idle, and lock before any sleep |
 
 **`bar/`**: the bar (`Bar.qml`, one per monitor) and its pieces
 (`Capsule`, `BarButton`, `BarText`, `BarTooltip`). Each widget is a file
-(`Audio`, `Clock`, `Workspaces`, `SystemButton`, `DrivesButton`…); `Bar.qml`
+(`Audio`, `Clock`, `Workspaces`, `SystemButton`, `DrivesButton`, `BatteryStatus`…); `Bar.qml`
 lays them out from `bar.layout` in `settings.json`.
 
 **`controlcenter/`**: `ControlCenter.qml` (the panel: tabs at the top and the
 chosen page) and one page per file: `CcHome`, `CcMedia`, `CcAudio`,
-`CcSystem`, `CcNetwork`, `CcBluetooth`, `CcDrives`, `CcWeather`,
-`CcCalendar`, `CcNotifications`. Each page is created when shown (so the
+`CcSystem`, `CcNetwork`, `CcBluetooth`, `CcDrives`, `CcBattery`,
+`CcWeather`, `CcCalendar`, `CcNotifications`. Each page is created when shown (so the
 wifi only scans for networks with Network open).
 
 **`panels/`**: the other windows: `SettingsWindow` (with `DisplaysPane`, the monitors section, which goes through

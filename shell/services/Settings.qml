@@ -33,7 +33,7 @@ Scope {
             layout: {
                 left: [["launcher", "about"]],
                 center: [["workspaces"]],
-                right: [["screencast"], ["clipboard", "audio", "bluetooth", "idleInhibitor", "system"], ["clock", "power"]]
+                right: [["screencast"], ["clipboard", "audio", "bluetooth", "idleInhibitor", "system"], ["battery"], ["clock", "power"]]
             },
             // Each widget's options: { "activeWindow": { "showIcon": false } }. Missing
             // ones use the default from widgetOptionDefs.
@@ -61,6 +61,13 @@ Scope {
         clipboard: {
             // History entries (cliphist). The oldest are deleted automatically.
             maxItems: 500
+        },
+        battery: {
+            // Charge (%) at which Low Power Mode turns on by itself, on battery (0 =
+            // never), and the low and critical warnings (0 = none).
+            lowPowerAt: 20,
+            warnAt: 20,
+            criticalAt: 10
         },
         fonts: {
             // Interface text, numbers/times/values, and the bar ("" = the monospace
@@ -94,7 +101,7 @@ Scope {
     property string barStyle: defaults.bar.style
     // The bar's widgets per zone (see defaults.bar.layout and Bar.qml).
     readonly property var barWidgets: ["launcher", "about", "controlCenter", "activeWindow", "apps", "system", "cpu", "memory", "gpu", "workspaces",
-        "clipboard", "appImages", "audio", "bluetooth", "network", "idleInhibitor", "screencast", "notifications", "drives", "clock", "power"]
+        "clipboard", "appImages", "audio", "bluetooth", "network", "idleInhibitor", "screencast", "notifications", "drives", "battery", "clock", "power"]
     property var barLayout: defaults.bar.layout
     property var widgetOptions: defaults.bar.widgetOptions
 
@@ -104,6 +111,9 @@ Scope {
     readonly property var widgetOptionDefs: ({
         activeWindow: [
             { key: "showIcon", label: "Show icon", hint: "The app icon next to its name", type: "toggle", fallback: true }
+        ],
+        battery: [
+            { key: "showPercent", label: "Show percentage", hint: "The charge next to the icon", type: "toggle", fallback: true }
         ],
         appImages: [
             { key: "folder", label: "Folder", hint: "The AppImages listed come from here", type: "text", fallback: "~/Applications" },
@@ -147,6 +157,10 @@ Scope {
     property string lockUnits: defaults.lock.units
     // Clipboard history (see ClipboardService.qml).
     property int clipboardMaxItems: defaults.clipboard.maxItems
+    // The battery (see BatteryService.qml), in %; 0 = off.
+    property int batteryLowPowerAt: defaults.battery.lowPowerAt
+    property int batteryWarnAt: defaults.battery.warnAt
+    property int batteryCriticalAt: defaults.battery.criticalAt
 
     readonly property string path: (Quickshell.env("XDG_CONFIG_HOME") || home + "/.config") + "/spore/settings.json"
 
@@ -174,6 +188,7 @@ Scope {
             wallpaper: { transition: wallpaperTransition, videos: videoWallpapers },
             lock: { weather: lockWeather, units: lockUnits },
             clipboard: { maxItems: clipboardMaxItems },
+            battery: { lowPowerAt: batteryLowPowerAt, warnAt: batteryWarnAt, criticalAt: batteryCriticalAt },
             fonts: { interface: fontInterface, monospace: fontMonospace, bar: fontBar }
         }
         for (const section in changes)
@@ -264,6 +279,10 @@ Scope {
         if (!same(lockWeather, place)) lockWeather = place
         lockUnits = get("lock", "units") === "imperial" ? "imperial" : "metric"
         clipboardMaxItems = Math.max(1, get("clipboard", "maxItems"))
+        const level = key => Math.max(0, Math.min(100, Math.round(get("battery", key))))
+        batteryLowPowerAt = level("lowPowerAt")
+        batteryWarnAt = level("warnAt")
+        batteryCriticalAt = level("criticalAt")
         fontInterface = get("fonts", "interface") || defaults.fonts.interface
         // Without the fonts section, the old bar.font was the monospace one.
         const oldFont = (s.bar || {}).font

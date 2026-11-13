@@ -91,6 +91,27 @@ Scope {
             root.popups = root.popups.filter(k => k !== entry.key)
             root.history = root.history.slice()
         })
+        insert(entry)
+    }
+
+    // The shell's own notifications (the battery's warnings): an entry with no
+    // app behind it, so no actions. Returns its key, to take its popup away
+    // later (hidePopup).
+    function post(appName: string, appIcon: string, summary: string, body: string, urgency: int): string {
+        const entry = {
+            key: "s" + Date.now() + "-" + summary.length,
+            appName: appName, appIcon: appIcon, image: "",
+            summary: summary, body: body, urgency: urgency,
+            time: Date.now(),
+            live: null
+        }
+        insert(entry)
+        return entry.key
+    }
+
+    // On top of the history and, unless Do Not Disturb holds it (critical
+    // ones always pass), as a popup.
+    function insert(entry: var): void {
         const all = [entry].concat(history)
         // The ones pushed out of the history by the cap: released (as if they
         // expired). Otherwise they stayed alive in memory, with their images, as
@@ -100,7 +121,7 @@ Scope {
             if (old.live) old.live.expire()
         }
         history = all.slice(0, maxHistory)
-        if (!dnd || n.urgency === NotificationUrgency.Critical)
+        if (!dnd || entry.urgency === NotificationUrgency.Critical)
             popups = [entry.key].concat(popups).slice(0, 5)
         saveTimer.restart()
     }

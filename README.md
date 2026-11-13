@@ -33,6 +33,7 @@ https://github.com/user-attachments/assets/29860ee6-0807-400e-bb00-78f9562862b1
 
 ## What's new
 
+- **Battery:** the charge in the bar and a Control Center page, with a macOS-style Low Power Mode and low battery warnings.
 - **AppImages widget:** a list of the AppImages in a folder, newest version of each.
 - **Settings → Printers:** default, queue, test page, and adding a network printer without a driver.
 - **Settings → Displays:** resolution, scale and rotation, with "Keep this change?" and what you keep is remembered.

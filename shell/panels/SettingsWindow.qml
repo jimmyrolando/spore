@@ -183,6 +183,15 @@ PanelWindow {
                 { key: "caffeineSuspend", label: "Suspend", hint: "Never while Caffeine is on", type: "minutes", fixed: true }
             ]}
         ]},
+        { id: "battery", label: "Battery", desc: "Low Power Mode and warnings", groups: [
+            { title: "Low Power Mode", rows: [
+                { key: "lowPowerAt", label: "Turn on automatically", hint: "On battery, at this charge. It turns off again when you plug in", type: "level" }
+            ]},
+            { title: "Warnings", rows: [
+                { key: "warnAt", label: "Low battery", type: "level" },
+                { key: "criticalAt", label: "Critically low", hint: "Shown even with Do Not Disturb", type: "level" }
+            ]}
+        ]},
         // Its view is built separately (see "About" below).
         { id: "about", label: "About", desc: "Spore Shell", groups: [] }
     ]
@@ -267,6 +276,9 @@ PanelWindow {
         case "caffeineLockAfter": return settings.caffeineLockAfter
         case "caffeineScreenOffAfter": return settings.caffeineScreenOffAfter
         case "caffeineSuspend": return 0
+        case "lowPowerAt": return settings.batteryLowPowerAt
+        case "warnAt": return settings.batteryWarnAt
+        case "criticalAt": return settings.batteryCriticalAt
         case "style": return settings.barStyle
         case "opacity": return settings.barOpacity
         case "clockFormat": return settings.clockFormat
@@ -285,11 +297,13 @@ PanelWindow {
         return ""
     }
 
-    // − / + controls: minutes (0 = Never) or percentage (in 10% steps). With
+    // − / + controls: minutes (0 = Never), percentage (in 10% steps) or a
+    // battery level (in 5% steps up to 50%, 0 = Off). With
     // `steps` (minutes), the next or previous one on that scale; a value off
     // the scale (edited by hand) goes to its nearest neighbor.
     function stepValue(row: var, v: real, dir: int): real {
         if (row.type === "percent") return Math.max(0, Math.min(1, Math.round(v * 10 + dir) / 10))
+        if (row.type === "level") return Math.max(0, Math.min(50, Math.round(v / 5 + dir) * 5))
         if (row.steps) {
             const scale = [0].concat(row.steps.map(m => m * 60))
             const next = dir > 0 ? scale.find(s => s > v) : scale.slice().reverse().find(s => s < v)
@@ -300,6 +314,7 @@ PanelWindow {
 
     function stepLabel(row: var, v: real): string {
         if (row.type === "percent") return Math.round(v * 100) + "%"
+        if (row.type === "level") return v === 0 ? "Off" : v + "%"
         return v === 0 ? "Never" : Math.round(v / 60) + " min"
     }
 
@@ -321,6 +336,9 @@ PanelWindow {
         switch (key) {
         case "lockAfter": case "screenOffAfter": case "suspendAfter": case "caffeineLockAfter": case "caffeineScreenOffAfter":
             settings.save({ idle: { [key]: v } })
+            break
+        case "lowPowerAt": case "warnAt": case "criticalAt":
+            settings.save({ battery: { [key]: v } })
             break
         case "style": settings.save({ bar: { style: v } }); break
         case "opacity": settings.save({ bar: { opacity: v } }); break
@@ -368,7 +386,7 @@ PanelWindow {
     readonly property var widgetLabels: ({
         launcher: "Launcher", about: "About (NixOS logo)", controlCenter: "Control Center", activeWindow: "Active window", apps: "Open apps",
         system: "System", cpu: "CPU", memory: "Memory", gpu: "GPU", workspaces: "Workspaces", clipboard: "Clipboard", appImages: "AppImages",
-        audio: "Volume", bluetooth: "Bluetooth", network: "Network", idleInhibitor: "Idle inhibitor", screencast: "Screen sharing", notifications: "Notifications", drives: "Drives",
+        audio: "Volume", bluetooth: "Bluetooth", network: "Network", idleInhibitor: "Idle inhibitor", screencast: "Screen sharing", notifications: "Notifications", drives: "Drives", battery: "Battery",
         clock: "Clock", power: "Power"
     })
 
@@ -759,7 +777,7 @@ PanelWindow {
             // Stepper: minutes (0 = Never) or percentage. A `fixed` row shows only
             // its value, aligned with the others' (the buttons keep their space).
             RowLayout {
-                visible: ["minutes", "percent"].includes(rowItem.row.type)
+                visible: ["minutes", "percent", "level"].includes(rowItem.row.type)
                 spacing: 4
 
                 SmallButton {
@@ -773,7 +791,7 @@ PanelWindow {
                     Layout.preferredWidth: 76
                     horizontalAlignment: Text.AlignHCenter
                     text: root.stepLabel(rowItem.row, rowItem.val)
-                    color: rowItem.row.type === "minutes" && rowItem.val === 0 ? root.muted : root.theme.text
+                    color: ["minutes", "level"].includes(rowItem.row.type) && rowItem.val === 0 ? root.muted : root.theme.text
                     font.family: root.theme.fontFamily
                     font.pixelSize: 13
                 }

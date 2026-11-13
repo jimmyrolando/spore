@@ -197,7 +197,7 @@ fi
 
 echo "3. IPC"
 targets=$(WAYLAND_DISPLAY=$disp "$qs" ipc --pid "$shell_pid" show | sed -n 's/^target //p')
-for t in lock clipboard controlcenter appearance power wallpaper settings about caffeine brightness; do
+for t in lock clipboard controlcenter appearance power wallpaper settings about caffeine brightness battery; do
     grep -qx "$t" <<< "$targets" || bad "missing IPC target \"$t\""
 done
 ipc caffeine enable
@@ -232,8 +232,48 @@ want='[{"name":"Built-in display","percent":30},{"name":"Test Monitor","percent"
 got=$(ipc brightness list)
 [ "$got" = "$want" ] || bad "brightness: after setting it, the screens are $got, expected $want"
 
+# The battery, simulated (BatteryService.qml): its page only with one, Low
+# Power Mode on by itself at 20 % and off when plugged in, and the warnings
+# at 20 % and 10 %. A simulated battery has a profile of its own: the real
+# machine's never changes.
+battery_is() { # $1: a "key":value the status has to have; $2: when
+    local got
+    for _ in $(seq 10); do
+        got=$(ipc battery status)
+        grep -qF "$1" <<< "$got" && return 0
+        sleep 0.2
+    done
+    bad "battery, $2: expected $1 in $got"
+}
+ipc battery simulate 50 discharging
+battery_is '"present":true' "simulated"
+battery_is '"lowPower":false' "at 50 %"
+ipc controlcenter open battery
+sleep 0.8
+ipc battery simulate 18 discharging
+battery_is '"lowPower":true,"autoOn":true,"warned":1' "at 18 % (on by itself, warned)"
+ipc battery lowPower off
+battery_is '"lowPower":false' "turned off by hand"
+ipc battery simulate 15 discharging
+battery_is '"lowPower":false' "turned off by hand, at 15 % (it stays off)"
+ipc battery simulate 8 discharging
+battery_is '"warned":2' "at 8 % (the critical warning)"
+ipc battery simulate 9 charging
+battery_is '"lowPower":false,"autoOn":false,"warned":0' "plugged in"
+ipc battery simulate 19 discharging
+battery_is '"lowPower":true,"autoOn":true' "a new discharge, at 19 %"
+ipc battery simulate 19 plugged
+battery_is '"lowPower":false' "plugged in (what it turned on goes off)"
+ipc battery lowPower on
+ipc battery simulate 60 charging
+battery_is '"lowPower":true' "turned on by hand, plugged in (it stays on)"
+ipc battery lowPower off
+ipc controlcenter toggle
+sleep 0.5
+check_errors "with a simulated battery"
+
 echo "5. Settings (every section)"
-for section in appearance fonts bar lock idle about; do
+for section in appearance fonts bar lock idle battery about; do
     ipc settings open "$section"
     sleep 0.8
 done

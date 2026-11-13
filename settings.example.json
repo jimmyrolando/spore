@@ -17,7 +17,7 @@
     "layout": {
       "left": [["launcher", "about"]],
       "center": [["workspaces"]],
-      "right": [["clipboard", "audio", "bluetooth", "idleInhibitor", "system"], ["clock", "power"]]
+      "right": [["clipboard", "audio", "bluetooth", "idleInhibitor", "system"], ["battery"], ["clock", "power"]]
     }
   },
   "picker": {
@@ -33,6 +33,11 @@
   },
   "clipboard": {
     "maxItems": 500
+  },
+  "battery": {
+    "lowPowerAt": 20,
+    "warnAt": 20,
+    "criticalAt": 10
   },
   "fonts": {
     "interface": "Noto Sans",

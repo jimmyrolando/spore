@@ -27,6 +27,8 @@ PanelWindow {
     // Name, user@host and photo for Home (UserInfo.qml).
     property UserInfo user: null
     property DrivesService drives: null
+    // The laptop's battery: its page, and Home's Low Power tile.
+    property BatteryService battery: null
     // The screens' brightness, read again each time it opens.
     property BrightnessService brightness: null
     Component.onCompleted: if (brightness) brightness.refresh()
@@ -66,7 +68,7 @@ PanelWindow {
     WlrLayershell.namespace: "quickshell-control-center"
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
-    readonly property var pages: [
+    readonly property var allPages: [
         // icon: a Lucide name (lucide.js, see Icon.qml).
         { id: "home", label: "Home", icon: "house" },
         { id: "media", label: "Media", icon: "sixteenth-notes" },
@@ -75,10 +77,13 @@ PanelWindow {
         { id: "network", label: "Network", icon: "wifi" },
         { id: "bluetooth", label: "Bluetooth", icon: "bluetooth" },
         { id: "drives", label: "Drives", icon: "eject" },
+        { id: "battery", label: "Battery", icon: "battery-medium" },
         { id: "weather", label: "Weather", icon: "cloud-sun" },
         { id: "calendar", label: "Calendar", icon: "calendar" },
         { id: "notifications", label: "Notifications", icon: "bell" }
     ]
+    // Battery, only on a machine with one.
+    readonly property var pages: allPages.filter(p => p.id !== "battery" || (battery !== null && battery.present))
     readonly property var current: pages.find(p => p.id === tab) || pages[0]
     // Pending (the badge): the ones that arrived since Notifications was last
     // opened.
@@ -241,7 +246,7 @@ PanelWindow {
                 Layout.rightMargin: 20
                 Layout.bottomMargin: 20
                 sourceComponent: ({ home: homePage, media: mediaPage, audio: audioPage, system: systemPage, network: networkPage,
-                    bluetooth: bluetoothPage, drives: drivesPage, weather: weatherPage, calendar: calendarPage,
+                    bluetooth: bluetoothPage, drives: drivesPage, battery: batteryPage, weather: weatherPage, calendar: calendarPage,
                     notifications: notificationsPage })[root.current.id]
             }
         }
@@ -258,6 +263,7 @@ PanelWindow {
             caffeine: root.caffeine
             notifications: root.notifications
             brightness: root.brightness
+            battery: root.battery
             onCaffeineToggled: root.caffeineToggled()
             onPageRequested: (id) => root.tabRequested(id)
             onWallpaperPickerRequested: root.wallpaperPickerRequested()
@@ -296,6 +302,14 @@ PanelWindow {
         CcDrives {
             theme: root.theme
             service: root.drives
+        }
+    }
+
+    Component {
+        id: batteryPage
+        CcBattery {
+            theme: root.theme
+            service: root.battery
         }
     }
 

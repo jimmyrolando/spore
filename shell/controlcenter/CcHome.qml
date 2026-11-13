@@ -6,7 +6,6 @@ import Quickshell.Io
 import Quickshell.Widgets
 import Quickshell.Bluetooth
 import Quickshell.Networking
-import Quickshell.Services.UPower
 import Quickshell.Services.Mpris
 import "../common"
 import "../services"
@@ -14,8 +13,8 @@ import "ccutil.js" as CcUtil
 import "../common/brand.js" as Brand
 
 // Control Center → Home (design v2): who you are over the wallpaper, six
-// quick toggles in a row (Wi-Fi, Bluetooth, Caffeine, Do Not Disturb, Power
-// Saver: muting is the volume row's), what's playing, the time with the
+// quick toggles in a row (Wi-Fi, Bluetooth, Caffeine, Do Not Disturb, Low
+// Power: muting is the volume row's), what's playing, the time with the
 // weather, the volume and the screens' brightness.
 ColumnLayout {
     id: root
@@ -30,6 +29,8 @@ ColumnLayout {
     property NotificationService notifications: null
     // A row per screen whose brightness can be set.
     property BrightnessService brightness: null
+    // Low Power Mode (the Power Saver profile), for its tile.
+    property BatteryService battery: null
     signal caffeineToggled()
     // Click on the header's wallpaper.
     signal wallpaperPickerRequested()
@@ -62,7 +63,7 @@ ColumnLayout {
 
     readonly property BluetoothAdapter btAdapter: Bluetooth.defaultAdapter
     readonly property bool dnd: notifications !== null && notifications.dnd
-    readonly property bool saver: PowerProfiles.profile === PowerProfile.PowerSaver
+    readonly property bool saver: battery !== null && battery.lowPower
 
 
     // --- Header: photo, name, user@host with the uptime, and the brand with
@@ -291,9 +292,10 @@ ColumnLayout {
 
         Tile {
             icon: "leaf"
-            label: "Power Saver"
+            label: "Low Power"
             checked: root.saver
-            onClicked: PowerProfiles.profile = checked ? PowerProfile.Balanced : PowerProfile.PowerSaver
+            available: root.battery !== null
+            onClicked: root.battery.setLowPower(!checked)
         }
     }
 

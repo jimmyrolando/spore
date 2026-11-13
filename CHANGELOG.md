@@ -6,6 +6,18 @@ newest first. A line is added here each time something new reaches `main`.
 
 ## Unreleased
 
+### November 12
+
+- **Battery.** On a laptop, the bar shows the battery with its charge (a
+  bolt while charging) and the Control Center has a Battery page: the time
+  left, the battery's health and Low Power Mode. As on macOS, Low Power
+  Mode turns amber in the bar; here it's the system's Power Saver profile.
+  It turns on by itself at 20 % on battery and off again when you plug in,
+  and there are warnings at 20 % and 10 % (the critical one shows even with
+  Do Not Disturb). Settings → Battery changes those levels. Home's Power
+  Saver tile is now Low Power, the same switch.
+- Files' Restore icon has a new name in Lucide (archive-arrow-up).
+
 ### November 6
 
 - **Hyprland 0.57 works again.** Its config is Lua now (`hyprland.lua`), so

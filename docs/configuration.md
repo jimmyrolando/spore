@@ -14,7 +14,7 @@ if the JSON is broken, in which case the previous values are kept.
 
 ## The Settings window
 
-`Mod+Alt+,` (like `Cmd+,` on a Mac), or the Control Center's gear. Eight
+`Mod+Alt+,` (like `Cmd+,` on a Mac), or the Control Center's gear. Nine
 sections:
 
 - **Appearance** (the one it opens on by default): the wallpaper grid, the
@@ -49,6 +49,8 @@ sections:
 - **Lock screen**: the weather (off by default: when on, Open-Meteo sees your
   IP address every 30 minutes), its location and units.
 - **Idle**: the idle timeouts.
+- **Battery**: when Low Power Mode turns on by itself, and the low and
+  critical warnings.
 - **About**: the brand and the versions.
 
 Every change is saved right away to `settings.json` (`Settings.save()`); the
@@ -81,6 +83,9 @@ same strip directly.
 | `lock.weather` | `null` | the weather: `null` (the default) is off, and nothing goes online for it. Settings → Lock screen turns it on (`{ "enabled": true }`: the time zone's city) and its Location saves `{ "location", "name", "region", "latitude", "longitude" }`. `"enabled": false` turns it off and keeps the location |
 | `lock.units` | `"metric"` | `"metric"` (°C, km/h) or `"imperial"` (°F, mph) |
 | `clipboard.maxItems` | `500` | clipboard history entries; the oldest are deleted automatically |
+| `battery.lowPowerAt` | `20` | on battery, the charge (%) at which Low Power Mode turns on by itself; it turns off again when plugged in (`0` = never) |
+| `battery.warnAt` | `20` | the low battery warning (`0` = none) |
+| `battery.criticalAt` | `10` | the critical warning, shown even with Do Not Disturb (`0` = none) |
 | `fonts.interface` | `"Noto Sans"` | the interface text font (menus, panels, most of the text) |
 | `fonts.monospace` | `"JetBrainsMono Nerd Font Mono"` | numbers, times and values (formerly `bar.font`, which is still read if `fonts` is missing) |
 | `fonts.bar` | `""` | the bar's; `""` = the monospace one |
@@ -91,7 +96,7 @@ same strip directly.
 "layout": {
   "left":   [["launcher", "about"]],
   "center": [["workspaces"]],
-  "right":  [["clipboard", "audio", "bluetooth", "idleInhibitor", "system"], ["clock", "power"]]
+  "right":  [["clipboard", "audio", "bluetooth", "idleInhibitor", "system"], ["battery"], ["clock", "power"]]
 }
 ```
 
@@ -123,6 +128,7 @@ capsule with the one above.
 | `screencast` | a red dot, only while an app records or shares the screen (like on macOS); tooltip with the app and the screen | |
 | `notifications` | bell (with a dot if there are unread ones) | Control Center → Notifications |
 | `drives` | eject (only with external drives) | Control Center → Drives |
+| `battery` | the battery with its charge and the percentage (only on a machine with a battery); a bolt while charging; amber with Low Power Mode on, red when critical. The gear on its row hides the percentage | Control Center → Battery |
 | `clock` | date and time | Control Center → Calendar |
 | `power` | power | the power menu |
 
@@ -145,8 +151,8 @@ The Control Center opens below the zone of the widget that was clicked
 
 | Target | Functions |
 |---|---|
-| `controlcenter` | `toggle`, `open <page>` (`home`, `media`, `audio`, `system`, `network`, `bluetooth`, `drives`, `weather`, `calendar`, `notifications`) |
-| `settings` | `toggle`, `open <section>` (`appearance`, `fonts`, `bar`, `displays`, `printers`, `lock`, `idle`, `about`) |
+| `controlcenter` | `toggle`, `open <page>` (`home`, `media`, `audio`, `system`, `network`, `bluetooth`, `drives`, `battery`, `weather`, `calendar`, `notifications`) |
+| `settings` | `toggle`, `open <section>` (`appearance`, `fonts`, `bar`, `displays`, `printers`, `lock`, `idle`, `battery`, `about`) |
 | `appearance` | `toggle` (the strip) |
 | `clipboard` | `toggle` |
 | `appimages` | `toggle` |
@@ -156,6 +162,7 @@ The Control Center opens below the zone of the widget that was clicked
 | `caffeine` | `toggle`, `enable`, `disable`, `isEnabled` (no suspending on idle; the screen locks and turns off after `idle.caffeineLockAfter` and `idle.caffeineScreenOffAfter`) |
 | `wallpaper` | `reload` |
 | `brightness` | `refresh`, `list` (JSON: name and percent per screen), `set <name> <percent>` |
+| `battery` | `status` (JSON: charge, status, Low Power Mode), `lowPower <on\|off\|toggle>`, `simulate <percent> <discharging\|charging\|full\|plugged>` (a fake battery, to try it on a machine without one; its Low Power Mode doesn't touch the system's profile), `real` |
 
 `spore-ipc` is `quickshell ipc --path <the shell's folder> call`: without the
 folder, Quickshell looks in `~/.config/quickshell` and doesn't find the

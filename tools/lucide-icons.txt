@@ -92,7 +92,7 @@ file-spreadsheet
 chevron-up
 usb
 square-terminal
-archive-restore
+archive-arrow-up
 simple:archlinux
 simple:fedora
 simple:debian
@@ -112,3 +112,6 @@ simple:redhat
 simple:centos
 simple:cachyos
 simple:linux
+zap
+plug
+battery-medium

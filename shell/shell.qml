@@ -702,6 +702,38 @@ ShellRoot {
         stateDir: root.stateDir
     }
 
+    // The laptop's battery: the bar widget, its Control Center page, Low Power
+    // Mode and the low battery warnings (see BatteryService.qml).
+    BatteryService {
+        id: batteryService
+        settings: shellSettings
+        notifications: notificationService
+        nested: sessionCompositor.nested
+    }
+
+    // qs ipc call battery status | lowPower <on|off|toggle> | simulate <percent> <state> | real
+    IpcHandler {
+        target: "battery"
+        // JSON: { present, simulated, percent, status, lowPower, autoOn, warned }.
+        function status(): string {
+            return batteryService.describe()
+        }
+        function lowPower(mode: string): void {
+            batteryService.setLowPower(mode === "toggle" ? !batteryService.lowPower : mode === "on")
+        }
+        // A fake battery, to try the widget, the page and the warnings on a
+        // machine without one. state: discharging, charging, full or plugged.
+        function simulate(percent: int, state: string): void {
+            batteryService.simPercent = Math.max(0, Math.min(100, percent))
+            batteryService.simState = ["discharging", "charging", "full", "plugged"].includes(state) ? state : "discharging"
+            batteryService.simulated = true
+        }
+        // Back to the real one.
+        function real(): void {
+            batteryService.simulated = false
+        }
+    }
+
     NotificationPopups {
         theme: sessionTheme
         service: notificationService
@@ -790,6 +822,7 @@ ShellRoot {
             monitor: systemMonitor
             drives: drivesService
             brightness: brightnessService
+            battery: batteryService
             bluetoothAgent: bluetoothPairing
             user: userInfo
             caffeine: root.caffeine
@@ -1004,6 +1037,7 @@ ShellRoot {
             caffeine: root.caffeine
             notifications: notificationService
             drives: drivesService
+            battery: batteryService
             onCaffeineToggled: root.caffeine = !root.caffeine
             onAboutRequested: root.aboutOpen = !root.aboutOpen
             onClipboardRequested: root.clipboardOpen = !root.clipboardOpen

@@ -22,7 +22,7 @@ Item {
     property string lastIcon: "copy"
 
     readonly property var icons: ({ copy: "copy", move: "arrow-right", archive: "file-archive",
-        restore: "archive-restore", trash: "trash" })
+        restore: "archive-arrow-up", trash: "trash" })
 
     implicitWidth: 340
     implicitHeight: card.height

@@ -1627,7 +1627,7 @@ FloatingWindow {
                             CcButton {
                                 theme: root.theme
                                 size: 30
-                                icon: "archive-restore"
+                                icon: "archive-arrow-up"
                                 label: "Restore"
                                 enabled: root.trashTop && root.selectedCount > 0
                                 onClicked: root.restoreSelection()
