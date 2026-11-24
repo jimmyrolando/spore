@@ -128,7 +128,10 @@ QtObject {
         }
         if (!detected) {
             monitors = ddc
-            detected = true
+            // A monitor that has just woken up (back from screen-off) doesn't
+            // answer yet: while a screen has no monitor, look again the next
+            // time the Control Center opens, or its slider is gone for good.
+            detected = Quickshell.screens.every(s => s.name.startsWith("eDP") || ddc.some(m => m.connector === s.name))
         }
         // Only this session's screens, in their order on the desk; a laptop's
         // own one first.

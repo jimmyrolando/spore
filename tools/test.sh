@@ -124,15 +124,17 @@ disp=$(basename "$sock" | sed 's/^niri\.\(wayland-[0-9]*\)\..*/\1/')
 # The screens' brightness (services/BrightnessService.qml) with stand-ins: a
 # monitor that answers on the nested niri's output (winit), one that doesn't,
 # and a laptop's backlight. The real ddcutil never runs: it would reach the
-# real monitors.
+# real monitors. The monitor starts asleep (back from screen-off, its DDC
+# doesn't answer yet), so it's only found when the Control Center opens.
 mkdir -p "$tmp/backlight/test_bl"
 echo 500 > "$tmp/backlight/test_bl/brightness"
 echo 1000 > "$tmp/backlight/test_bl/max_brightness"
 echo 40 > "$tmp/ddc.value"
+touch "$tmp/ddc.asleep"
 cat > "$tmp/ddcutil" <<EOF
 #!/bin/sh
 case "\$1" in
-detect) printf 'Display 1\n   I2C bus:          /dev/i2c-7\n   DRM connector:    card0-winit\n   Monitor:          TST:Test Monitor:1\n\nInvalid display\n   I2C bus:          /dev/i2c-8\n' ;;
+detect) [ -e "$tmp/ddc.asleep" ] || printf 'Display 1\n   I2C bus:          /dev/i2c-7\n   DRM connector:    card0-winit\n   Monitor:          TST:Test Monitor:1\n\nInvalid display\n   I2C bus:          /dev/i2c-8\n' ;;
 getvcp) printf 'VCP 10 C %s 100\n' "\$(cat "$tmp/ddc.value")" ;;
 setvcp) echo "\$3" > "$tmp/ddc.value" ;;
 esac
@@ -206,6 +208,10 @@ ipc caffeine disable
 [ "$(ipc caffeine isEnabled)" = false ] || bad "caffeine disable didn't turn it off"
 
 echo "4. Control Center (every page)"
+want='[{"name":"Built-in display","percent":50}]'
+got=$(ipc brightness list)
+[ "$got" = "$want" ] || bad "brightness: with the monitor asleep, the screens are $got, expected $want"
+rm "$tmp/ddc.asleep"
 for page in home media audio system network bluetooth drives weather calendar notifications; do
     ipc controlcenter open "$page"
     sleep 0.8

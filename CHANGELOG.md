@@ -6,6 +6,12 @@ newest first. A line is added here each time something new reaches `main`.
 
 ## Unreleased
 
+### November 24
+
+- A monitor's brightness slider no longer disappears from the Control
+  Center after the screen turns off: a monitor that just woke up doesn't
+  answer yet, and now it's looked for again the next time it opens.
+
 ### November 12
 
 - **Battery.** On a laptop, the bar shows the battery with its charge (a
