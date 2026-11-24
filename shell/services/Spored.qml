@@ -5,8 +5,9 @@ import "../common/session.js" as Session
 
 // spored (spored/ in the repo): Spore's services, the parts Quickshell can't
 // do on its own: org.freedesktop.FileManager1 (a browser's "Show in folder"
-// opens Spore Files), the lock before the system sleeps (Idle.qml) and the
-// drives' events (DrivesService.qml). Running for the whole session, with
+// opens Spore Files), the lock before the system sleeps (Idle.qml), the
+// drives' events (DrivesService.qml) and, when asked, receiving with
+// LocalSend (LocalSendService.qml). Running for the whole session, with
 // the session's environment (what it starts, Files, sets up its own), and
 // started again if it ends.
 //
@@ -31,14 +32,24 @@ Scope {
     property var services: []
     readonly property bool logind: services.includes("logind")
     readonly property bool drives: services.includes("drives")
+    // Receiving with LocalSend: offered, and on only when asked
+    // (LocalSendService.qml).
+    readonly property bool localsend: services.includes("localsend")
 
     signal sleepComing()
     signal lockAsked()
     signal drivesEvent()
+    // {"event":"localsend","kind":…} (spored/localsend.go).
+    signal localsendEvent(var message)
 
     // The lock is up: the system can sleep.
     function locked(): void {
         if (logind) daemon.write('{"op":"locked"}\n')
+    }
+
+    // An op for LocalSend ({"op":"localsend",…}).
+    function localsendOp(message: var): void {
+        if (localsend) daemon.write(JSON.stringify(message) + "\n")
     }
 
     // Each restart waits longer, up to a minute: a spored that can't start
@@ -99,6 +110,7 @@ Scope {
         if (message.event === "sleep") sleepComing()
         else if (message.event === "lock") lockAsked()
         else if (message.event === "drives") drivesEvent()
+        else if (message.event === "localsend") localsendEvent(message)
     }
 
     // A run of a minute or more counts as working: the next failure starts

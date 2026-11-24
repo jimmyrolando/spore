@@ -15,11 +15,15 @@ import (
 //	← {"op":"locked"}      the lock is up (spored lets the sleep go on)
 //	→ {"event":"lock"}     logind asked to lock (`loginctl lock-session`)
 //	→ {"event":"drives"}   a drive came, went or was mounted: read them again
+//	← {"op":"localsend","enabled":true,…}   receive files with LocalSend (localsend.go)
+//	→ {"event":"localsend",…}               and what comes in; its messages are there
 //
 // `services` lists what's working; for what's missing, the shell keeps
 // its scripts. Change `protocol` with any change to the messages: in dev
 // mode the QML comes from the checkout and spored from the package, and
-// the shell goes back to its scripts when they don't match.
+// the shell goes back to its scripts when they don't match. A service the
+// shell has to ask for, like "localsend", can add messages without it: an
+// older shell never asks, and an older spored doesn't offer it.
 const serviceProtocol = 1
 
 type service struct {
@@ -27,6 +31,8 @@ type service struct {
 	enc *json.Encoder
 	// {"op":"locked"} from the shell.
 	onLocked func()
+	// The other ops ("localsend", "localsend-answer"…), with the whole line.
+	onOp func(op string, line []byte)
 }
 
 func newService(out io.Writer) *service {
@@ -65,6 +71,8 @@ func (s *service) read(in io.Reader) {
 		}
 		if msg.Op == "locked" && s.onLocked != nil {
 			s.onLocked()
+		} else if msg.Op != "" && s.onOp != nil {
+			s.onOp(msg.Op, append([]byte(nil), scanner.Bytes()...))
 		}
 	}
 }

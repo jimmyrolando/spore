@@ -734,6 +734,32 @@ ShellRoot {
         }
     }
 
+    // Receiving files from the LocalSend app (see LocalSendService.qml).
+    LocalSendService {
+        id: localSendService
+        settings: shellSettings
+        notifications: notificationService
+        spored: sporedService
+        stateDir: root.stateDir
+        nested: sessionCompositor.nested
+    }
+
+    // qs ipc call localsend status | accept | decline
+    IpcHandler {
+        target: "localsend"
+        // JSON: { status ("off", "on", "error"), alias, error, pending }.
+        function status(): string {
+            return localSendService.describe()
+        }
+        // The last request's answer, as its notification's buttons give it.
+        function accept(): void {
+            localSendService.answer(localSendService.lastSession, true)
+        }
+        function decline(): void {
+            localSendService.answer(localSendService.lastSession, false)
+        }
+    }
+
     NotificationPopups {
         theme: sessionTheme
         service: notificationService

@@ -46,6 +46,13 @@ in one small Go program with no runtime dependencies.
   lock-session`) locks too.
 - The drives (drives.go): UDisks2's signals, a burst gathered into one
   event, and the shell reads the drives again with lsblk.
+- Receiving with LocalSend (localsend.go), when the shell turns it on
+  (`localsend.enabled`): LocalSend's protocol v2, so the LocalSend app on
+  an iPhone, a Mac or Android sends here. An HTTPS server on 53317 with a
+  certificate of its own, kept in the state folder (the sender pins it by
+  its fingerprint), and multicast to be found. Each request waits for the
+  shell's Accept; names are cleaned and nothing is replaced (see the top of
+  localsend.go). Only receiving: sending is the next step.
 - The shell and spored talk in JSON lines (the protocol is at the top of
   service.go). The hello lists what's working; for the rest, and without
   spored, Idle.qml and DrivesService.qml keep their old scripts.

@@ -22,7 +22,9 @@ Rectangle {
 
     readonly property color muted: theme.muted
     readonly property bool critical: entry.urgency === NotificationUrgency.Critical
-    readonly property var actions: entry.live ? entry.live.actions.filter(a => a.identifier !== "default") : []
+    // The app's, or the shell's own (NotificationService.postWithActions).
+    readonly property var actions: entry.live ? entry.live.actions.filter(a => a.identifier !== "default")
+        : entry.onAction ? (entry.actions || []) : []
 
     implicitHeight: content.implicitHeight + 24
     // The Control Center's card style (design v2).
@@ -55,7 +57,7 @@ Rectangle {
     // Click: default action (opens the app, the chat, etc.).
     MouseArea {
         anchors.fill: parent
-        cursorShape: root.entry.live ? Qt.PointingHandCursor : Qt.ArrowCursor
+        cursorShape: root.entry.live || root.entry.onAction ? Qt.PointingHandCursor : Qt.ArrowCursor
         onClicked: root.service.invoke(root.entry.key, null)
     }
 

@@ -103,6 +103,11 @@ qs=$(sed -n 's/^export SPORE_QUICKSHELL="\(.*\)"$/\1/p' "$pkg/bin/spore")
 mkdir -p "$tmp/config/spore" "$tmp/state" "$tmp/cache" "$tmp/xdg-state"
 printf '%s' "$repo" > "$tmp/config/spore/dev-path"
 cp "$repo/settings.example.json" "$tmp/config/spore/settings.json"
+# LocalSend receives on a local port (never the real network's 53317), into
+# a folder of the test's.
+ls_port=$((40000 + RANDOM % 10000))
+jq --arg f "$tmp/received" '.localsend.enabled = true | .localsend.folder = $f' \
+    "$tmp/config/spore/settings.json" > "$tmp/settings.ls" && mv "$tmp/settings.ls" "$tmp/config/spore/settings.json"
 cat > "$tmp/niri.kdl" <<'EOF'
 hotkey-overlay {
     skip-at-startup
@@ -144,6 +149,7 @@ chmod +x "$tmp/ddcutil"
 env XDG_CONFIG_HOME="$tmp/config" XDG_STATE_HOME="$tmp/xdg-state" XDG_CACHE_HOME="$tmp/cache" \
     SPORE_STATE_DIR="$tmp/state" WAYLAND_DISPLAY="$disp" NIRI_SOCKET="$sock" \
     SPORE_DDCUTIL="$tmp/ddcutil" SPORE_BACKLIGHT_DIR="$tmp/backlight" \
+    SPORE_LOCALSEND_PORT="$ls_port" \
     "$pkg/bin/spore" --no-color > "$log" 2>&1 &
 shell_pid=$!
 
@@ -174,16 +180,16 @@ check_errors "at startup"
 # the wrapper kept the session's PATH.
 tr '\0' '\n' < "/proc/$shell_pid/environ" | grep -qxF "SPORE_SESSION=PATH=$PATH" ||
     bad "the shell's wrapper didn't keep the session's PATH (SPORE_SESSION)"
-# spored, in a nested session: only the drives (no FileManager1 or logind,
-# the real session's), in place of `udisksctl monitor`. If it ends, the
-# monitor takes over until it's back.
+# spored, in a nested session: only the drives and LocalSend on a local port
+# (no FileManager1 or logind, the real session's), in place of `udisksctl
+# monitor`. If it ends, the monitor takes over until it's back.
 child() { # the shell's child whose command line matches $1
     for c in $(pgrep -P "$shell_pid"); do
         tr '\0' ' ' < "/proc/$c/cmdline" 2>/dev/null | grep -q -- "$1" && { echo "$c"; return; }
     done
 }
-for _ in $(seq 25); do grep -q 'spored: drives$' "$log" && break; sleep 0.2; done
-grep -q 'spored: drives$' "$log" || bad "spored didn't say hello with only the drives (nested)"
+for _ in $(seq 25); do grep -q 'spored: drives, localsend$' "$log" && break; sleep 0.2; done
+grep -q "spored: drives, localsend$" "$log" || bad "spored didn't say hello with only the drives and LocalSend (nested)"
 spored_pid=$(child 'spored -files')
 [ -n "$spored_pid" ] && ! tr '\0' ' ' < "/proc/$spored_pid/cmdline" | grep -q -- '-nested' &&
     bad "spored runs without -nested in a nested session"
@@ -199,7 +205,7 @@ fi
 
 echo "3. IPC"
 targets=$(WAYLAND_DISPLAY=$disp "$qs" ipc --pid "$shell_pid" show | sed -n 's/^target //p')
-for t in lock clipboard controlcenter appearance power wallpaper settings about caffeine brightness battery; do
+for t in lock clipboard controlcenter appearance power wallpaper settings about caffeine brightness battery localsend; do
     grep -qx "$t" <<< "$targets" || bad "missing IPC target \"$t\""
 done
 ipc caffeine enable
@@ -773,13 +779,54 @@ EOF
     [ -n "$files_found" ] && bad "errors in Files' log:" && echo "$files_found" | sed 's/^/    /' | head -20
 fi
 
-echo "8. Lock (the nested session)"
+echo "8. LocalSend (receiving)"
+# The phone is curl, on the nested shell's local port: a request waits for
+# Accept (the IPC gives the answer the notification's buttons do), the file
+# lands in the folder, Decline is a 403 and a message is a notification.
+ls_url="https://127.0.0.1:$ls_port/api/localsend/v2"
+ls_status() { # $1: a "key":value the status has to have; $2: when
+    local got
+    for _ in $(seq 20); do
+        got=$(ipc localsend status)
+        grep -qF "$1" <<< "$got" && return 0
+        sleep 0.25
+    done
+    bad "localsend, $2: expected $1 in $got"
+}
+ls_request() { # $1: the file's name; the answer's code goes to $tmp/ls.code
+    curl -sk -X POST "$ls_url/prepare-upload" -o "$tmp/ls.prepare" -w '%{http_code}' -d '{"info":{"alias":"Test Phone","version":"2.1","deviceModel":"iPhone","deviceType":"mobile","fingerprint":"x","port":53317,"protocol":"https","download":false},"files":{"f1":{"id":"f1","fileName":"'"$1"'","size":5,"fileType":"text/plain","sha256":null,"preview":null}}}' > "$tmp/ls.code"
+}
+ls_status '"status":"on"' "turned on in settings.json"
+ls_request hello.txt &
+ls_status '"pending":1' "with a request"
+ipc localsend accept
+wait $!
+if [ "$(cat "$tmp/ls.code")" = 200 ]; then
+    session=$(jq -r .sessionId "$tmp/ls.prepare")
+    token=$(jq -r .files.f1 "$tmp/ls.prepare")
+    code=$(printf hello | curl -sk -X POST "$ls_url/upload?sessionId=$session&fileId=f1&token=$token" --data-binary @- -o /dev/null -w '%{http_code}')
+    [ "$code" = 200 ] || bad "localsend: the upload got $code"
+    [ "$(cat "$tmp/received/hello.txt" 2>/dev/null)" = hello ] || bad "localsend: hello.txt didn't land in the folder"
+    ls_status '"pending":0' "after receiving"
+else
+    bad "localsend: an accepted request got $(cat "$tmp/ls.code")"
+fi
+ls_request declined.txt &
+ls_status '"pending":1' "with a second request"
+ipc localsend decline
+wait $!
+[ "$(cat "$tmp/ls.code")" = 403 ] || bad "localsend: a declined request got $(cat "$tmp/ls.code"), not 403"
+code=$(curl -sk -X POST "$ls_url/prepare-upload" -o /dev/null -w '%{http_code}' -d '{"info":{"alias":"Test Phone","version":"2.1"},"files":{"m":{"id":"m","fileName":"m.txt","size":2,"fileType":"text/plain","preview":"hi"}}}')
+[ "$code" = 204 ] || bad "localsend: a message got $code, not 204"
+check_errors "with LocalSend"
+
+echo "9. Lock (the nested session)"
 ipc lock lock
 sleep 2
 [ "$(ipc lock isLocked)" = true ] || bad "lock didn't lock"
 check_errors "when locking"
 
-echo "9. Exit with no orphans"
+echo "10. Exit with no orphans"
 children=$(pgrep -P "$shell_pid" | tr '\n' ' ')
 kill "$shell_pid"
 sleep 2

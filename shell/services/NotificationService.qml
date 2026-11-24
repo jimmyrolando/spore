@@ -109,6 +109,38 @@ Scope {
         return entry.key
     }
 
+    // One of the shell's own with buttons (LocalSend's Accept and Decline):
+    // actions [{ identifier, text }], and onAction(identifier) when one is
+    // pressed, or "default" for a click on the card. `sticky`: its popup stays
+    // until it's answered. The buttons are only there while the shell runs: the
+    // history on disk keeps the text.
+    function postWithActions(appName: string, appIcon: string, summary: string, body: string, urgency: int,
+                             actions: var, onAction: var, sticky: bool): string {
+        const entry = {
+            key: "s" + Date.now() + "-" + summary.length,
+            appName: appName, appIcon: appIcon, image: "",
+            summary: summary, body: body, urgency: urgency,
+            time: Date.now(),
+            live: null,
+            actions: actions, onAction: onAction, sticky: sticky
+        }
+        insert(entry)
+        return entry.key
+    }
+
+    // Changes one of the shell's own (a transfer's progress, its buttons gone
+    // once answered). With `pop`, its popup comes back if it had gone.
+    function update(key: string, changes: var, pop: bool): void {
+        const i = history.findIndex(e => e.key === key)
+        if (i < 0) return
+        const h = history.slice()
+        h[i] = Object.assign({}, h[i], changes)
+        history = h
+        if (pop && !popups.includes(key) && (!dnd || h[i].urgency === NotificationUrgency.Critical))
+            popups = [key].concat(popups).slice(0, 5)
+        saveTimer.restart()
+    }
+
     // On top of the history and, unless Do Not Disturb holds it (critical
     // ones always pass), as a popup.
     function insert(entry: var): void {
@@ -171,6 +203,13 @@ Scope {
     function invoke(key: string, action: var): void {
         const e = find(key)
         if (!e) return
+        // The shell's own: its popup goes first, so what the action shows next
+        // (a transfer's progress) can pop up again.
+        if (!e.live && e.onAction) {
+            hidePopup(key)
+            e.onAction(action ? action.identifier : "default")
+            return
+        }
         if (e.live) {
             const a = action ?? e.live.actions.find(x => x.identifier === "default")
             if (a) a.invoke()

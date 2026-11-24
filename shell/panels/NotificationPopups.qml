@@ -57,10 +57,10 @@ PanelWindow {
                 // Popup: solid background (the history's is more transparent).
                 color: root.theme.base
 
-                // How long it stays: what the app asks for (ms), otherwise 5 s. Critical:
-                // until closed.
+                // How long it stays: what the app asks for (ms), otherwise 5 s. Critical,
+                // and the shell's own that wait for an answer: until closed.
                 readonly property int timeout: {
-                    if (entry.urgency === NotificationUrgency.Critical) return 0
+                    if (entry.urgency === NotificationUrgency.Critical || entry.sticky) return 0
                     const t = entry.live ? entry.live.expireTimeout : -1
                     return t > 0 ? (t < 100 ? t * 1000 : t) : 5000
                 }

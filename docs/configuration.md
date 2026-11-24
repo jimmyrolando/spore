@@ -86,6 +86,9 @@ same strip directly.
 | `battery.lowPowerAt` | `20` | on battery, the charge (%) at which Low Power Mode turns on by itself; it turns off again when plugged in (`0` = never) |
 | `battery.warnAt` | `20` | the low battery warning (`0` = none) |
 | `battery.criticalAt` | `10` | the critical warning, shown even with Do Not Disturb (`0` = none) |
+| `localsend.enabled` | `false` | receive files from the [LocalSend](https://localsend.org) app (an iPhone, a Mac, Android): this computer shows up in its list, and each request waits for Accept in a notification. It's a server on port 53317 (TCP and UDP), which the firewall has to let in; the LocalSend app can't be open at the same time (same port). On NixOS: `networking.firewall.allowedTCPPorts` and `allowedUDPPorts` with `53317`, or `programs.localsend.enable` |
+| `localsend.name` | `""` | the name the other devices see; `""` = the computer's |
+| `localsend.folder` | `"~/Downloads"` | where received files go; a folder sent keeps its structure in a new folder, and nothing already there is replaced |
 | `fonts.interface` | `"Noto Sans"` | the interface text font (menus, panels, most of the text) |
 | `fonts.monospace` | `"JetBrainsMono Nerd Font Mono"` | numbers, times and values (formerly `bar.font`, which is still read if `fonts` is missing) |
 | `fonts.bar` | `""` | the bar's; `""` = the monospace one |
@@ -163,6 +166,7 @@ The Control Center opens below the zone of the widget that was clicked
 | `wallpaper` | `reload` |
 | `brightness` | `refresh`, `list` (JSON: name and percent per screen), `set <name> <percent>` |
 | `battery` | `status` (JSON: charge, status, Low Power Mode), `lowPower <on\|off\|toggle>`, `simulate <percent> <discharging\|charging\|full\|plugged>` (a fake battery, to try it on a machine without one; its Low Power Mode doesn't touch the system's profile), `real` |
+| `localsend` | `status` (JSON: `on`, `off` or `error`, the name, the error, the requests under way), `accept` and `decline` (the last request, as its notification's buttons) |
 
 `spore-ipc` is `quickshell ipc --path <the shell's folder> call`: without the
 folder, Quickshell looks in `~/.config/quickshell` and doesn't find the

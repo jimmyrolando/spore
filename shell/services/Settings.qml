@@ -69,6 +69,14 @@ Scope {
             warnAt: 20,
             criticalAt: 10
         },
+        localsend: {
+            // Receive files from the LocalSend app (an iPhone, a Mac, Android) on
+            // port 53317: each request waits for Accept. Off unless turned on.
+            enabled: false,
+            // The name the other devices see ("" = this computer's).
+            name: "",
+            folder: "~/Downloads"
+        },
         fonts: {
             // Interface text, numbers/times/values, and the bar ("" = the monospace
             // one). There used to be just one: bar.font (the monospace one).
@@ -161,6 +169,11 @@ Scope {
     property int batteryLowPowerAt: defaults.battery.lowPowerAt
     property int batteryWarnAt: defaults.battery.warnAt
     property int batteryCriticalAt: defaults.battery.criticalAt
+    // Receiving with LocalSend (see LocalSendService.qml).
+    property bool localsendEnabled: defaults.localsend.enabled
+    property string localsendName: defaults.localsend.name
+    property string localsendFolderRaw: defaults.localsend.folder
+    readonly property string localsendFolder: expandHome(localsendFolderRaw)
 
     readonly property string path: (Quickshell.env("XDG_CONFIG_HOME") || home + "/.config") + "/spore/settings.json"
 
@@ -189,6 +202,7 @@ Scope {
             lock: { weather: lockWeather, units: lockUnits },
             clipboard: { maxItems: clipboardMaxItems },
             battery: { lowPowerAt: batteryLowPowerAt, warnAt: batteryWarnAt, criticalAt: batteryCriticalAt },
+            localsend: { enabled: localsendEnabled, name: localsendName, folder: localsendFolderRaw },
             fonts: { interface: fontInterface, monospace: fontMonospace, bar: fontBar }
         }
         for (const section in changes)
@@ -283,6 +297,9 @@ Scope {
         batteryLowPowerAt = level("lowPowerAt")
         batteryWarnAt = level("warnAt")
         batteryCriticalAt = level("criticalAt")
+        localsendEnabled = get("localsend", "enabled") === true
+        localsendName = get("localsend", "name")
+        localsendFolderRaw = get("localsend", "folder") || defaults.localsend.folder
         fontInterface = get("fonts", "interface") || defaults.fonts.interface
         // Without the fonts section, the old bar.font was the monospace one.
         const oldFont = (s.bar || {}).font

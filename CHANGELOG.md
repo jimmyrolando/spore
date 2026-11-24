@@ -8,6 +8,14 @@ newest first. A line is added here each time something new reaches `main`.
 
 ### November 24
 
+- **Receiving with LocalSend.** Turn on `localsend.enabled` in
+  `settings.json` and this computer shows up in the LocalSend app on your
+  iPhone, Mac or Android. Each request asks first, in a notification with
+  Accept and Decline, then shows its progress (with Cancel) and ends with
+  Show in Files; files go to `~/Downloads`. Text sent from the app arrives
+  as a notification with Copy. It's spored that receives (LocalSend's
+  protocol, port 53317), so the LocalSend app itself can't be open at the
+  same time. Sending from here is next.
 - A monitor's brightness slider no longer disappears from the Control
   Center after the screen turns off: a monitor that just woke up doesn't
   answer yet, and now it's looked for again the next time it opens.

@@ -5,7 +5,9 @@
 // It offers org.freedesktop.FileManager1 (filemanager.go), so a browser's
 // "Show in folder" opens Spore Files; it locks the screen before the system
 // sleeps (logind.go); and it tells the shell when a drive comes, goes or is
-// mounted (drives.go). It talks to the shell in JSON lines (service.go).
+// mounted (drives.go). It receives files from the LocalSend app on a phone
+// or another computer, when the shell turns it on (localsend.go). It
+// talks to the shell in JSON lines (service.go).
 // `spored files` is something else: the engine of Files' operations, which
 // Files starts as its child (files.go).
 package main
@@ -91,6 +93,11 @@ func main() {
 			log.Fatal("the system bus closed")
 		}()
 	}
+
+	// LocalSend: offered, and on only when the shell asks (localsend.go).
+	ls := &localsend{emit: svc.send, nested: *nested}
+	svc.onOp = ls.op
+	offered = append(offered, "localsend")
 
 	svc.hello(offered)
 	go svc.read(os.Stdin)

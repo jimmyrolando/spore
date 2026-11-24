@@ -39,6 +39,11 @@
     "warnAt": 20,
     "criticalAt": 10
   },
+  "localsend": {
+    "enabled": false,
+    "name": "",
+    "folder": "~/Downloads"
+  },
   "fonts": {
     "interface": "Noto Sans",
     "monospace": "JetBrainsMono Nerd Font Mono",

@@ -55,6 +55,7 @@ decides.
 | `BrightnessService.qml` | the screens' brightness: external monitors over DDC/CI (ddcutil) and a laptop's backlight, read when the Control Center opens; a slider sends only its latest value |
 | `DrivesService.qml` | external drives (udisks): mount, unmount, eject; and, for Files, the internal disks' volumes worth opening (with their `/etc/fstab` folder) |
 | `BatteryService.qml` | the laptop's battery (UPower), Low Power Mode (the Power Saver profile, on by itself at `battery.lowPowerAt`) and the low battery warnings; `qs ipc call battery simulate` fakes one for testing |
+| `LocalSendService.qml` | receiving files from the LocalSend app: turns spored's receiver on (`localsend.enabled`) and shows its requests, progress and messages as the shell's own notifications, with buttons |
 | `SystemTheme.qml` | carries the palette and mode to GTK, kitty, rofi, Zed… ([appearance](appearance.md)) |
 | `Idle.qml` | lock, turn off monitors and suspend on idle, and lock before any sleep |
 
