@@ -112,8 +112,10 @@ Scope {
     // One of the shell's own with buttons (LocalSend's Accept and Decline):
     // actions [{ identifier, text }], and onAction(identifier) when one is
     // pressed, or "default" for a click on the card. `sticky`: its popup stays
-    // until it's answered. The buttons are only there while the shell runs: the
-    // history on disk keeps the text.
+    // until it's answered. They pass Do Not Disturb (passDnd): they answer
+    // something the user is doing right then, like AirDrop under Focus. The
+    // buttons are only there while the shell runs: the history on disk keeps
+    // the text.
     function postWithActions(appName: string, appIcon: string, summary: string, body: string, urgency: int,
                              actions: var, onAction: var, sticky: bool): string {
         const entry = {
@@ -122,7 +124,7 @@ Scope {
             summary: summary, body: body, urgency: urgency,
             time: Date.now(),
             live: null,
-            actions: actions, onAction: onAction, sticky: sticky
+            actions: actions, onAction: onAction, sticky: sticky, passDnd: true
         }
         insert(entry)
         return entry.key
@@ -141,10 +143,11 @@ Scope {
         saveTimer.restart()
     }
 
-    // What Do Not Disturb lets through: critical ones, and the shell's own that
-    // wait for an answer (LocalSend's Accept): hidden, they'd expire unseen.
+    // What Do Not Disturb lets through: critical ones, and the shell's own with
+    // buttons (postWithActions: LocalSend's request, progress, files and
+    // messages). Hidden, a request would expire unseen.
     function passesDnd(e: var): bool {
-        return e.urgency === NotificationUrgency.Critical || e.sticky === true
+        return e.urgency === NotificationUrgency.Critical || e.passDnd === true
     }
 
     // On top of the history and, unless Do Not Disturb holds it (critical

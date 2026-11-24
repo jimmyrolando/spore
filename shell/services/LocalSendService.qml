@@ -16,6 +16,9 @@ import "../common/session.js" as Session
 //   localsend.folder, with them selected).
 // - A message (text sent from the app): the text, and Copy.
 //
+// They all show even with Do Not Disturb on: they answer what the user is
+// doing on the phone right then. Only the errors (the port taken) wait.
+//
 // Off unless localsend.enabled is true: it's a server on the network
 // (port 53317, TCP and UDP, which the firewall has to let in). In a nested
 // test session it's on only with SPORE_LOCALSEND_PORT, on 127.0.0.1.
@@ -108,7 +111,7 @@ Scope {
             break
         case "failed":
             if (s) notifications.update(s.key, { summary: m.message, body: "", actions: [], onAction: null, sticky: false }, true)
-            else notifications.post("LocalSend", icon, m.message, "", NotificationUrgency.Normal)
+            else notifications.postWithActions("LocalSend", icon, m.message, "", NotificationUrgency.Normal, [], null, false)
             forget(m.session)
             break
         case "declined":
