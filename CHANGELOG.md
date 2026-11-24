@@ -16,6 +16,8 @@ newest first. A line is added here each time something new reaches `main`.
   as a notification with Copy. It's spored that receives (LocalSend's
   protocol, port 53317), so the LocalSend app itself can't be open at the
   same time. Sending from here is next.
+- A LocalSend request shows even with Do Not Disturb on: it waits for your
+  answer, and hidden it would expire unseen.
 - A monitor's brightness slider no longer disappears from the Control
   Center after the screen turns off: a monitor that just woke up doesn't
   answer yet, and now it's looked for again the next time it opens.

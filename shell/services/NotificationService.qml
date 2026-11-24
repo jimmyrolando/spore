@@ -136,9 +136,15 @@ Scope {
         const h = history.slice()
         h[i] = Object.assign({}, h[i], changes)
         history = h
-        if (pop && !popups.includes(key) && (!dnd || h[i].urgency === NotificationUrgency.Critical))
+        if (pop && !popups.includes(key) && (!dnd || passesDnd(h[i])))
             popups = [key].concat(popups).slice(0, 5)
         saveTimer.restart()
+    }
+
+    // What Do Not Disturb lets through: critical ones, and the shell's own that
+    // wait for an answer (LocalSend's Accept): hidden, they'd expire unseen.
+    function passesDnd(e: var): bool {
+        return e.urgency === NotificationUrgency.Critical || e.sticky === true
     }
 
     // On top of the history and, unless Do Not Disturb holds it (critical
@@ -153,7 +159,7 @@ Scope {
             if (old.live) old.live.expire()
         }
         history = all.slice(0, maxHistory)
-        if (!dnd || entry.urgency === NotificationUrgency.Critical)
+        if (!dnd || passesDnd(entry))
             popups = [entry.key].concat(popups).slice(0, 5)
         saveTimer.restart()
     }
@@ -252,7 +258,7 @@ Scope {
 
     function toggleDnd(): void {
         dnd = !dnd
-        if (dnd) popups = popups.filter(k => { const e = find(k); return e && e.urgency === NotificationUrgency.Critical })
+        if (dnd) popups = popups.filter(k => { const e = find(k); return e && passesDnd(e) })
         saveTimer.restart()
     }
 
